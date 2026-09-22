@@ -1,0 +1,29 @@
+--- a/simde/x86/avx2.h
++++ b/simde/x86/avx2.h
+@@ -2883,6 +2883,27 @@
+ simde_mm256_madd_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_madd_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE)
++    simde__m256i_private
++      r_,
++      a_ = simde__m256i_to_private(a),
++      b_ = simde__m256i_to_private(b);
++
++    /* PMADDWD multiplies adjacent signed 16-bit lanes and wraps the sum
++     * into one signed 32-bit lane.  Strided RVV loads select even/odd
++     * lanes directly and avoid widening all 16 lanes followed by gathers. */
++    const size_t vl = 8;
++    const int16_t *a16 = (const int16_t *) &a_;
++    const int16_t *b16 = (const int16_t *) &b_;
++    int32_t *r32 = (int32_t *) &r_;
++    vint16m1_t a_even = __riscv_vlse16_v_i16m1(a16, 4, vl);
++    vint16m1_t a_odd  = __riscv_vlse16_v_i16m1(a16 + 1, 4, vl);
++    vint16m1_t b_even = __riscv_vlse16_v_i16m1(b16, 4, vl);
++    vint16m1_t b_odd  = __riscv_vlse16_v_i16m1(b16 + 1, 4, vl);
++    vint32m2_t sum = __riscv_vwmul_vv_i32m2(a_even, b_even, vl);
++    sum = __riscv_vwmacc_vv_i32m2(sum, a_odd, b_odd, vl);
++    __riscv_vse32_v_i32m2(r32, sum, vl);
++    return simde__m256i_from_private(r_);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmaddwod_w_h(__lasx_xvmulwev_w_h(a, b), a, b);

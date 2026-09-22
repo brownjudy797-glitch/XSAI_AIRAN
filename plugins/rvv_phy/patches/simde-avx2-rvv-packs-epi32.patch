@@ -1,0 +1,33 @@
+--- a/simde/x86/avx2.h
++++ b/simde/x86/avx2.h
+@@ -3971,6 +3971,31 @@
+ simde_mm256_packs_epi32 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_packs_epi32(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE)
++    simde__m256i_private
++      r_,
++      a_ = simde__m256i_to_private(a),
++      b_ = simde__m256i_to_private(b);
++
++    /* AVX2 packs independently inside each 128-bit lane.  Keep that exact
++     * order while using RVV's signed saturating narrowing operation. */
++    const size_t vl = 4;
++    const int32_t *a32 = (const int32_t *) &a_;
++    const int32_t *b32 = (const int32_t *) &b_;
++    int16_t *r16 = (int16_t *) &r_;
++    vint32m1_t a_lo = __riscv_vle32_v_i32m1(a32, vl);
++    vint32m1_t b_lo = __riscv_vle32_v_i32m1(b32, vl);
++    vint32m1_t a_hi = __riscv_vle32_v_i32m1(a32 + 4, vl);
++    vint32m1_t b_hi = __riscv_vle32_v_i32m1(b32 + 4, vl);
++    __riscv_vse16_v_i16mf2(r16,
++                           __riscv_vnclip_wx_i16mf2(a_lo, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 4,
++                           __riscv_vnclip_wx_i16mf2(b_lo, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 8,
++                           __riscv_vnclip_wx_i16mf2(a_hi, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 12,
++                           __riscv_vnclip_wx_i16mf2(b_hi, 0, 0, vl), vl);
++    return simde__m256i_from_private(r_);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvssrarni_h_w(b, a, 0);

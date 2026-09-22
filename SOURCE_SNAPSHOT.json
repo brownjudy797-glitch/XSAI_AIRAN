@@ -1,0 +1,16 @@
+{
+  "project": "XSAI_AIRAN",
+  "local_path": "/home/ubuntu/sionna-rk",
+  "parent_commit": "0abdce3ff7f5840d64b783632eb419ea6bf54ae5",
+  "oai_A_commit": "c6698f7dda869e0ab92e232da08d1a91385eb044",
+  "oai_A_local_patch": " executables/nr-gnb.c                               | 43 ++++++++++++++++++++--\n .../CODING/nrLDPC_coding/nrLDPC_coding_interface.h |  8 ++++\n .../nrLDPC_coding_segment_decoder.c                | 12 +++++-\n .../PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c     |  4 +-\n openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h  | 20 ++++++++++\n openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c      | 18 +++++++++\n openair1/PHY/defs_RU.h                             |  6 +++\n openair1/PHY/defs_gNB.h                            |  3 ++\n openair1/SCHED_NR/nr_ru_procedures.c               | 20 +++++++++-\n 9 files changed, 125 insertions(+), 9 deletions(-)\n",
+  "candidate_sha256": "b71d0dc86822a93ceec230c172811cf8104c7f404cca56aa831221cb179b7b01",
+  "validation": "10-minute sampled connectivity passed after clean start; reconnect failed; not stable acceptance",
+  "excluded": [
+    "runtime data",
+    "SIM/subscriber configuration",
+    "live environment files",
+    "build outputs",
+    "baseline archives"
+  ]
+}

@@ -1,0 +1,74 @@
+--- a/openair3/NGAP/ngap_gNB_nas_procedures.c
++++ b/openair3/NGAP/ngap_gNB_nas_procedures.c
+@@ -39,6 +39,7 @@
+ #include "BIT_STRING.h"
+ #include "INTEGER.h"
+ #include "ngap_msg_includes.h"
++#include "NGAP_PDUSessionResourceReleaseResponseTransfer.h"
+ #include "OCTET_STRING.h"
+ #include "T.h"
+ #include "aper_encoder.h"
+@@ -1186,7 +1187,20 @@
+       asn1cSequenceAdd(ie->value.choice.PDUSessionResourceReleasedListRelRes.list, NGAP_PDUSessionResourceReleasedItemRelRes_t, item);
+       pdusession_release_t *r = &pdusession_release_resp_p->pdusession_release[i];
+       item->pDUSessionID = r->pdusession_id;
+-      OCTET_STRING_fromBuf(&item->pDUSessionResourceReleaseResponseTransfer, (const char *)r->data.buf, r->data.len);
++      /* The release response requires an APER encoded transfer even when
++       * there are no optional IEs. RRC only supplies the session ID here. */
++      NGAP_PDUSessionResourceReleaseResponseTransfer_t transfer = {0};
++      asn_encode_to_new_buffer_result_t encoded = asn_encode_to_new_buffer(
++          NULL, ATS_ALIGNED_CANONICAL_PER,
++          &asn_DEF_NGAP_PDUSessionResourceReleaseResponseTransfer, &transfer);
++      if (encoded.result.encoded < 0 || encoded.buffer == NULL) {
++        free(encoded.buffer);
++        ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_NGAP_NGAP_PDU, &pdu);
++        NGAP_ERROR("Failed to encode PDU session release response transfer\n");
++        return -1;
++      }
++      item->pDUSessionResourceReleaseResponseTransfer.buf = encoded.buffer;
++      item->pDUSessionResourceReleaseResponseTransfer.size = encoded.result.encoded;
+       NGAP_DEBUG("pdusession_release_resp: pdusession ID %ld\n", item->pDUSessionID);
+     }
+   }
+--- a/openair2/RRC/NR/rrc_gNB_NGAP.c
++++ b/openair2/RRC/NR/rrc_gNB_NGAP.c
+@@ -807,6 +807,14 @@
+     const pdusession_resource_item_t *p = &msg->pdusession[i];
+     rrc_pdu_session_param_t *exist = find_pduSession(UE, p->pdusession_id, false /* don't create */);
+     if (exist) {
++      if (msg->nb_pdusessions_tosetup == 1 && ((exist->status == PDU_SESSION_STATUS_ESTABLISHED || exist->status == PDU_SESSION_STATUS_DONE) || exist->status == PDU_SESSION_STATUS_DONE)) {
++        LOG_I(NR_RRC, "UE %d: idempotent setup for established PDU session %d\n", UE->rrc_ue_id, p->pdusession_id);
++        exist->status = PDU_SESSION_STATUS_DONE;
++        rrc_gNB_send_NGAP_PDUSESSION_SETUP_RESP(rrc, UE, -1);
++        UE->nas_pdu = p->nas_pdu;
++        rrc_forward_ue_nas_message(rrc, UE);
++        return;
++      }
+       LOG_E(NR_RRC, "UE %d: already has existing PDU session %d rejecting PDU Session Resource Setup Request\n", UE->rrc_ue_id, p->pdusession_id);
+       ngap_cause_t cause = {.type = NGAP_CAUSE_RADIO_NETWORK, .value = NGAP_CAUSE_RADIO_NETWORK_MULTIPLE_PDU_SESSION_ID_INSTANCES};
+       send_ngap_pdu_session_setup_resp_fail(instance, msg, cause);
+@@ -1195,6 +1203,24 @@
+   resp->nb_of_pdusessions_failed = 0;
+   LOG_I(NR_RRC, "NGAP PDUSESSION RELEASE RESPONSE: rrc_ue_id %u release_pdu_sessions %d\n", resp->gNB_ue_ngap_id, pdu_sessions_released);
+   itti_send_msg_to_task (TASK_NGAP, rrc->module_id, msg_p);
++
++  /* This A branch lacks complete per-session CU-UP/DU teardown.  Once the
++   * final PDU session has gone, use the existing complete NG UE context
++   * release procedure to remove stale SDAP/PDCP/RLC/tunnels.  Never release
++   * the UE while another PDU session remains.  NAS registration is retained.
++   * This is a last-session policy, not general multi-session release support.
++   */
++  bool any_session = false;
++  for (int i = 0; i < UE->nb_of_pdusessions; ++i)
++    any_session |= UE->pduSession[i].param.pdusession_id != 0;
++  if (pdu_sessions_released > 0 && !any_session) {
++    UE->nb_of_pdusessions = 0;
++    const ngap_cause_t cause = {.type = NGAP_CAUSE_RADIO_NETWORK,
++                               .value = NGAP_CAUSE_RADIO_NETWORK_USER_INACTIVITY};
++    LOG_I(NR_RRC, "Last PDU session released: requesting complete UE context cleanup\n");
++    rrc_gNB_send_NGAP_UE_CONTEXT_RELEASE_REQ(rrc->module_id,
++                                          rrc_gNB_get_ue_context(rrc, UE->rrc_ue_id), cause);
++  }
+ }
+ 
+ //------------------------------------------------------------------------------
