@@ -17,5 +17,7 @@ if [[ "${2:-}" == --dfts-adapter ]]; then
   ln -s "$root/adapters" "$dest/adapters"
   git -C "$dest" apply --check "$root/patches/k3-A-dfts-extraction.patch"
   git -C "$dest" apply "$root/patches/k3-A-dfts-extraction.patch"
-  echo 'Applied the A DFT architecture extraction patch only.'
+  git -C "$dest" apply --check "$root/patches/k3-A-dfts-correctness.patch"
+  git -C "$dest" apply "$root/patches/k3-A-dfts-correctness.patch"
+  echo 'Applied DFT extraction and correctness patches; uses corrected project kernels. Not deployed to live OAI.'
 fi

@@ -968,11 +968,11 @@ oai_rvv_bfly5_i16(const int16_t *x0, const int16_t *x1,
     vint16m1_t n##or_##ci = __riscv_vneg_v_i16m1((ci), vl);               \
     vint16m1_t n##or_##di = __riscv_vneg_v_i16m1((di), vl);               \
     vint16m1_t or_ = oai_rvv_q15_acc8_i16(                                 \
-        b1r, (ar), b1i, n##or_##ai, b2r, (br), b2i, n##or_##bi,           \
-        b3r, (cr), b3i, n##or_##ci, b4r, (dr), b4i, n##or_##di, vl);      \
+        b1r, b1i, (ar), n##or_##ai, b2r, b2i, (br), n##or_##bi,           \
+        b3r, b3i, (cr), n##or_##ci, b4r, b4i, (dr), n##or_##di, vl);      \
     vint16m1_t oi_ = oai_rvv_q15_acc8_i16(                                 \
-        b1r, (ai), b1i, (ar), b2r, (bi), b2i, (br),                       \
-        b3r, (ci), b3i, (cr), b4r, (di), b4i, (dr), vl)
+        b1r, b1i, (ai), (ar), b2r, b2i, (bi), (br),                       \
+        b3r, b3i, (ci), (cr), b4r, b4i, (di), (dr), vl)
     OAI_RVV_RADIX5_OUT(q1r, q1i, c1r,c1i, c2r,c2i, c3r,c3i, c4r,c4i);
     OAI_RVV_RADIX5_OUT(q2r, q2i, c2r,c2i, c4r,c4i, c1r,c1i, c3r,c3i);
     OAI_RVV_RADIX5_OUT(q3r, q3i, c3r,c3i, c1r,c1i, c4r,c4i, c2r,c2i);

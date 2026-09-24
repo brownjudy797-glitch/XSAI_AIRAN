@@ -1,0 +1,59 @@
+--- a/openair1/PHY/TOOLS/oai_dfts.c
++++ b/openair1/PHY/TOOLS/oai_dfts.c
+@@ -3101,7 +3101,8 @@
+   
+   xtmpp = xtmp;
+ 
+-  for (i=0; i<256; i++) {
++  /* 4096 input vectors, 64 vectors consumed per iteration. */
++  for (i=0; i<64; i++) {
+     transpose4_ooff_simd256(x256  ,xtmpp,2048);
+     transpose4_ooff_simd256(x256+2,xtmpp+1,2048);
+     transpose4_ooff_simd256(x256+4,xtmpp+2,2048);
+@@ -3154,7 +3155,7 @@
+   if (scale>0) {
+     y256p = y256;
+ 
+-    for (i=0; i<64; i++) {
++    for (i=0; i<256; i++) {
+       y256p[0]  = mulhi_int16_simd256(y256p[0],ONE_OVER_SQRT2_Q15_128);
+       y256p[1]  = mulhi_int16_simd256(y256p[1],ONE_OVER_SQRT2_Q15_128);
+       y256p[2]  = mulhi_int16_simd256(y256p[2],ONE_OVER_SQRT2_Q15_128);
+@@ -6606,6 +6607,24 @@
+ static int16_t twa2304[767*2*4];
+ static int16_t twb2304[767*2*4];
+ 
++/* dft768 has a single-transform layout; the PUSCH path packs four lanes. */
++static void dft768_packed4(const int16_t *x, int16_t *y)
++{
++  int16_t lane_input[768 * 2] __attribute__((aligned(32)));
++  int16_t lane_output[768 * 2] __attribute__((aligned(32)));
++  for (int lane = 0; lane < 4; ++lane) {
++    for (int k = 0; k < 768; ++k) {
++      lane_input[2*k] = x[8*k + 2*lane];
++      lane_input[2*k+1] = x[8*k + 2*lane+1];
++    }
++    dft768(lane_input, lane_output, 1);
++    for (int k = 0; k < 768; ++k) {
++      y[8*k + 2*lane] = lane_output[2*k];
++      y[8*k + 2*lane+1] = lane_output[2*k+1];
++    }
++  }
++}
++
+ void dft2304(int16_t *x,int16_t *y,unsigned char scale_flag)  // 768 x 3
+ {
+   int i,j;
+@@ -6624,9 +6643,9 @@
+     x2128[i+1536] = x128[j+2];
+   }
+ 
+-  dft768((int16_t *)x2128,(int16_t *)ytmp128,1);
+-  dft768((int16_t *)(x2128+768),(int16_t *)(ytmp128+768),1);
+-  dft768((int16_t *)(x2128+1536),(int16_t *)(ytmp128+1536),1);
++  dft768_packed4((int16_t *)x2128,(int16_t *)ytmp128);
++  dft768_packed4((int16_t *)(x2128+768),(int16_t *)(ytmp128+768));
++  dft768_packed4((int16_t *)(x2128+1536),(int16_t *)(ytmp128+1536));
+ 
+   bfly3_tw1(ytmp128,ytmp128+768,ytmp128+1536,y128,y128+768,y128+1536);
+ 
