@@ -1,0 +1,7 @@
+{
+  "oai_commit": "c6698f7dda869e0ab92e232da08d1a91385eb044",
+  "source": "openair1/PHY/TOOLS/oai_dfts_rvv.h",
+  "sha256": "f1488fa6f207716e58dc97649add7d5ce98c579a6659f08b47bfbed352216ac5",
+  "migration": "byte-identical extraction; existing names retained",
+  "license": "OAI source provenance retained; refer to vendor/openairinterface5g/LICENSE and NOTICE"
+}
