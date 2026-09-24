@@ -2,6 +2,7 @@
 
 These are isolated development changes, not a replacement of the running gNB.
 The original A source snapshot and previous regression report remain unchanged.
+Follow-up independent FFT audit: see [DFTS_NUMERICS.md](DFTS_NUMERICS.md).
 
 ## Root causes and changes
 
@@ -16,6 +17,9 @@ The original A source snapshot and previous regression report remain unchanged.
    left most intermediate output uninitialized. An explicit gather/transform/
    scatter helper now transforms all four lanes. This is a correctness-first
    adapter, not a performance optimization.
+4. Follow-up numeric audit found incorrect IDFT65536 twiddle offsets in units of
+   256-bit vectors. Corrected +4096/+8192 to +2048/+4096; the third old group
+   read beyond the 6144-vector twiddle array.
 
 ## Verification
 
@@ -24,15 +28,17 @@ three separate-process runs, each with both scale flags and zero, impulse,
 small random and full-range random inputs: 2136 cases. Checks cover process
 completion, output canaries, zero preservation and deterministic output hashes.
 Unaffected specifications must retain the previous output hash. Expected changes
-are restricted to previously zero-anomalous DFTs, DFT2304 and DFT98304.
+are restricted to previously zero-anomalous DFTs, DFT2304, DFT98304 and the
+subsequently repaired IDFT65536.
 
 `test_dfts_acc8.c` independently compares the Q15 accumulator against scalar
 32-bit wrapping arithmetic, arithmetic shift and saturation, including vector tails.
 This verifies the helper arithmetic, not the entire radix-5 caller or FFT accuracy.
 
-No full floating-point FFT oracle, sanitizer-based input-read bounds verification,
-performance benchmark, gNB integration test or RF/E2E test is claimed. Further
-numerical validation is required before deploying this development module.
+The follow-up now provides an independent floating-point FFT audit for the
+low-amplitude random test pattern. No exhaustive numerical certification,
+sanitizer-based input-read bounds verification, performance benchmark, gNB
+integration test or RF/E2E test is claimed.
 
 ## Reproduction on the current K3 development checkout
 

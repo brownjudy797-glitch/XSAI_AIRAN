@@ -31,6 +31,7 @@ for direction, kind in enumerate(('DFT', 'IDFT')):
             runs.append({'returncode': rc, 'sha256': hashlib.sha256(binary.read_bytes()).hexdigest() if rc == 0 else None,
                          'zero_anomaly': 'ZERO_ANOMALY' in logtext})
         expected_change = kind == 'DFT' and (prior['size'] in (2304, 98304) or bool(prior['runs']['migrated']['zero_anomalies']))
+        expected_change = expected_change or (kind == 'IDFT' and prior['size'] == 65536)
         stable = all(r['returncode'] == 0 and not r['zero_anomaly'] for r in runs) and len({r['sha256'] for r in runs}) == 1
         unchanged = runs[0]['sha256'] == prior['runs']['migrated']['sha256']
         passed = stable and (expected_change or unchanged)

@@ -1,6 +1,6 @@
 {
   "scope": "Full-module safety/zero/determinism regression, not a floating-point accuracy certification",
-  "library_sha256": "896b0411e05b1455ff9ee20ba537ad6abee0433bcc403e2bdf4b447742537ead",
+  "library_sha256": "91ad8ccf8674ef6252944ec1a76fce2353dff5e76eb47688a761fc5286f5a44a",
   "sizes": [
     {
       "direction": "DFT",
@@ -2096,22 +2096,22 @@
       "runs": [
         {
           "returncode": 0,
-          "sha256": "72abf55ecc07df715602b9fbeafca8fcbc5aac71ea0efb41b6e28a143d084c3d",
+          "sha256": "aa3d60abd83988eeda09b30453cb3dbce3d29419261a092a49e3457240a06aa5",
           "zero_anomaly": false
         },
         {
           "returncode": 0,
-          "sha256": "72abf55ecc07df715602b9fbeafca8fcbc5aac71ea0efb41b6e28a143d084c3d",
+          "sha256": "aa3d60abd83988eeda09b30453cb3dbce3d29419261a092a49e3457240a06aa5",
           "zero_anomaly": false
         },
         {
           "returncode": 0,
-          "sha256": "72abf55ecc07df715602b9fbeafca8fcbc5aac71ea0efb41b6e28a143d084c3d",
+          "sha256": "aa3d60abd83988eeda09b30453cb3dbce3d29419261a092a49e3457240a06aa5",
           "zero_anomaly": false
         }
       ],
-      "expected_change": false,
-      "unchanged": true,
+      "expected_change": true,
+      "unchanged": false,
       "passed": true
     },
     {

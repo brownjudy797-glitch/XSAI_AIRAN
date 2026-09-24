@@ -19,6 +19,15 @@
        y256p[0]  = mulhi_int16_simd256(y256p[0],ONE_OVER_SQRT2_Q15_128);
        y256p[1]  = mulhi_int16_simd256(y256p[1],ONE_OVER_SQRT2_Q15_128);
        y256p[2]  = mulhi_int16_simd256(y256p[2],ONE_OVER_SQRT2_Q15_128);
+@@ -3902,7 +3903,7 @@
+   for (i=0; i<2048; i++) {
+     ibfly4_256(ytmpp,ytmpp+2048,ytmpp+4096,ytmpp+6144,
+            y256p,y256p+2048,y256p+4096,y256p+6144,
+-           tw65536_256p,tw65536_256p+4096,tw65536_256p+8192);
++           tw65536_256p,tw65536_256p+2048,tw65536_256p+4096);
+     tw65536_256p++;
+     y256p++;
+     ytmpp++;
 @@ -6606,6 +6607,24 @@
  static int16_t twa2304[767*2*4];
  static int16_t twb2304[767*2*4];
