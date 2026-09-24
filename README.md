@@ -1,5 +1,7 @@
 # XSAI_AIRAN
 
+工程入口：[K3 分层架构、独立构建与适配契约](docs/ARCHITECTURE.md)。
+
 K3 的 sionna-rk / OAI A 版真实空口端到端实验项目。K3 本地路径仍为 `/home/ubuntu/sionna-rk`。
 
 本仓库保存 2026-09-22 实机工作树快照：外层部署脚本、A 版源码及现有 PHY 计时修改。`vendor/openairinterface5g` 是实机 A 版源码；部署时需放到 `ext/openairinterface5g`。上游许可证及版权声明随源码保留，参见各目录 LICENSE 和 README.upstream.md。

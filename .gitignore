@@ -44,3 +44,6 @@ artifacts/
 **/*_bak/
 **/phy-fixed-build*/
 **/ran_build/
+
+# Independent architecture checks
+.build/
