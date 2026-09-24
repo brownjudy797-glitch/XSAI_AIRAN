@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "scope": "native OAI loader with real gNB link objects; modem main renamed and not called; no RF start",
+  "library_sha256": "9d8df237956c2a8b154618a3466ceffec424ddb90cb474d88de615eb2e3d0f02",
+  "probe_sha256": "e7492432c2193d602c88a32765a0ef6ddb8151543d9d4f6ae433715661f61191",
+  "log": "CMDLINE: \"phytest\" \"-O\" \"cmdlineonly::dbgl0\" \nDFT_LOADED_PATH /home/ubuntu/XSAI_AIRAN-publish-20260922/.build/gnb-integration/libdfts.so\nPASS: native OAI loader, actual gNB link dependencies, DFT64/IDFT64 impulse\n"
+}

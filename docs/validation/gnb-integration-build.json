@@ -1,0 +1,25 @@
+{
+  "command": [
+    "nice",
+    "-n",
+    "15",
+    "cmake",
+    "--build",
+    "/home/ubuntu/XSAI_AIRAN-publish-20260922/.build/gnb-integration",
+    "--target",
+    "nr-softmodem",
+    "dfts",
+    "params_libconfig",
+    "--parallel",
+    "4"
+  ],
+  "started": 1790217343.3307147,
+  "scope": "build only; no install or RF/modem launch",
+  "returncode": 0,
+  "elapsed_seconds": 1934.6110699176788,
+  "artifacts": {
+    "nr-softmodem": "8c3d34cfe549cee1f2790efbec9cc89947133d8c5212bf7e2864b36e78d51073",
+    "libdfts.so": "9d8df237956c2a8b154618a3466ceffec424ddb90cb474d88de615eb2e3d0f02",
+    "libparams_libconfig.so": "391c8652358524b8cd0f80db91df4f5a8c4ccf0aec1ffa65dac2124d33b110d1"
+  }
+}

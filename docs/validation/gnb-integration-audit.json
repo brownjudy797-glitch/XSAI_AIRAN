@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "source": "/home/ubuntu/oai-A-dfts-extraction-20260924",
+  "compile_entries": 12330,
+  "forbidden_source_references": [],
+  "adapter_dependency_confirmed": true,
+  "source_sha256": {
+    "/home/ubuntu/oai-A-dfts-extraction-20260924/openair1/PHY/TOOLS/oai_dfts.c": "a3e8cd38cfbad638cb76e47567681f17a015abba57bbcbb419c2ad08e66d36aa",
+    "/home/ubuntu/oai-A-dfts-extraction-20260924/openair1/PHY/TOOLS/oai_dfts_rvv.h": "37171698d8ca6c0fcf52f47afcf419a2acfc489db76a31e04c3e66b7f4710f0d",
+    "/home/ubuntu/XSAI_AIRAN-publish-20260922/plugins/rvv_phy/include/oai_dfts_rvv.h": "351aa8be55384eaa300cfb35d50616642433a7f148ebe5aa575528382dcfd040",
+    "/home/ubuntu/XSAI_AIRAN-publish-20260922/adapters/oai/include/xsai_dfts_adapter.h": "9301ebf3ab4715ae4c95ce99e680b737698b39085c316029b40349e29b9468cc"
+  },
+  "gnb_ldd": "\tlinux-vdso.so.1 (0x0000003faddca000)\n\tlibz.so.1 => /usr/lib/riscv64-linux-gnu/libz.so.1 (0x0000003fadd90000)\n\tlibsctp.so.1 => /usr/lib/riscv64-linux-gnu/libsctp.so.1 (0x0000003fadd8b000)\n\tlibcrypto.so.3 => /usr/lib/riscv64-linux-gnu/libcrypto.so.3 (0x0000003faa000000)\n\tlibgcc_s.so.1 => /usr/lib/riscv64-linux-gnu/libgcc_s.so.1 (0x0000003fadd68000)\n\tlibstdc++.so.6 => /usr/lib/riscv64-linux-gnu/libstdc++.so.6 (0x0000003fa9c00000)\n\tlibm.so.6 => /usr/lib/riscv64-linux-gnu/libm.so.6 (0x0000003fadcc2000)\n\tlibc.so.6 => /usr/lib/riscv64-linux-gnu/libc.so.6 (0x0000003fa9e77000)\n\t/lib/ld-linux-riscv64-lp64d.so.1 (0x0000003faddcc000)\n\tlibzstd.so.1 => /usr/lib/riscv64-linux-gnu/libzstd.so.1 (0x0000003faa539000)\n",
+  "required_dft_exports": true,
+  "scope": "static provenance/dependency audit; ldd does not prove dlopen-only radio plugins work"
+}
