@@ -126,3 +126,9 @@ BLER/RX-latency gate. Stage 19 confirms that batching reaches the complete
 `nr_ulsim` receive chain, but the current model fails the BLER and latency
 acceptance gates and is not approved as a replacement for the conventional
 demapper.
+
+Stage 20 adds a separate reliability-conditioned `2->16->16->2` FP16 model.
+It restores the frozen BLER advantage on the tested three-seed/four-SNR matrix,
+but its complete RX mean is 1.747 ms versus 1.055 ms for the conventional
+control. Treat it as a quality-qualified performance prototype, not a deployable
+replacement; see `docs/DISTILLED_A100_END_TO_END_STAGE20_20260928.md`.

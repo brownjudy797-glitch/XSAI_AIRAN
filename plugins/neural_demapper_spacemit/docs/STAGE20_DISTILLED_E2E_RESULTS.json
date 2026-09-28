@@ -1,0 +1,434 @@
+{
+  "scope": "reliability-conditioned FP16 MLP on A100 in complete nr_ulsim RX",
+  "configuration": {
+    "frames_per_seed_snr": 500,
+    "seeds": [
+      2609271,
+      2609272,
+      2609273
+    ],
+    "snrs_db": [
+      5.5,
+      6.0,
+      6.5,
+      7.0
+    ],
+    "mcs": 10,
+    "prb": 24,
+    "layers": 1,
+    "harq_rounds": 1,
+    "a100_threads": 8,
+    "a100_affinity": "8;9;10;11;12;13;14;15",
+    "llr_scale": 4
+  },
+  "sha256": {
+    "/home/ubuntu/sionna-rk/.work-neural-demapper-a100/oai-ulsch-build/nr_ulsim_spacemit_batch": "ca5b9f2bae2f876d7d866f4677c607147bd3828b8c77a5df82032a6ee13001b8",
+    "/home/ubuntu/sionna-rk/.work-neural-demapper-a100/build/libdemapper_distilled_spacemit_ep.so": "0c13a0e5c5577fa399aa0d480e2915fa8f8e68d76c8c18c328e25f4f2a45ef91",
+    "/home/ubuntu/sionna-rk/.work-neural-demapper-a100/models/distilled_demapper.dynamic.fp16.onnx": "36890118d732b55913116c2c43d474c286e10a0da7a157fc977c4506ca947fdd",
+    "/home/ubuntu/sionna-rk/.work-neural-demapper-a100/models/distilled_demapper.6624x2.fp16.onnx": "a96318d5fb8729fbbf8900b024bcad8cf1e2a6579f53382bf8f0da1deee4c402"
+  },
+  "rows": [
+    {
+      "seed": 2609271,
+      "snr_db": 5.5,
+      "frames": 500,
+      "failures": 493,
+      "bler": 0.986,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 2,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1776.23,
+          "p50_us": 1771.359,
+          "p95_us": 1814.19,
+          "p99_us": 1897.685,
+          "max_us": 1953.724
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 354.546,
+          "p50_us": 353.23,
+          "p95_us": 365.271,
+          "p99_us": 367.521,
+          "max_us": 379.062
+        }
+      }
+    },
+    {
+      "seed": 2609271,
+      "snr_db": 6.0,
+      "frames": 500,
+      "failures": 218,
+      "bler": 0.436,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 1,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1784.936,
+          "p50_us": 1781.65,
+          "p95_us": 1829.147,
+          "p99_us": 1957.015,
+          "max_us": 2057.384
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 354.84,
+          "p50_us": 353.605,
+          "p95_us": 366.979,
+          "p99_us": 371.187,
+          "max_us": 398.645
+        }
+      }
+    },
+    {
+      "seed": 2609271,
+      "snr_db": 6.5,
+      "frames": 500,
+      "failures": 2,
+      "bler": 0.004,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1768.843,
+          "p50_us": 1752.443,
+          "p95_us": 1853.063,
+          "p99_us": 2014.553,
+          "max_us": 2048.593
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.551,
+          "p50_us": 353.272,
+          "p95_us": 365.979,
+          "p99_us": 384.937,
+          "max_us": 525.804
+        }
+      }
+    },
+    {
+      "seed": 2609271,
+      "snr_db": 7.0,
+      "frames": 500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1697.713,
+          "p50_us": 1700.571,
+          "p95_us": 1757.4,
+          "p99_us": 1798.107,
+          "max_us": 1951.973
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 354.287,
+          "p50_us": 352.855,
+          "p95_us": 365.771,
+          "p99_us": 372.687,
+          "max_us": 376.229
+        }
+      }
+    },
+    {
+      "seed": 2609272,
+      "snr_db": 5.5,
+      "frames": 500,
+      "failures": 357,
+      "bler": 0.714,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 12,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1797.706,
+          "p50_us": 1794.191,
+          "p95_us": 1832.73,
+          "p99_us": 1856.604,
+          "max_us": 1990.721
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.307,
+          "p50_us": 353.98,
+          "p95_us": 366.104,
+          "p99_us": 372.229,
+          "max_us": 431.892
+        }
+      }
+    },
+    {
+      "seed": 2609272,
+      "snr_db": 6.0,
+      "frames": 500,
+      "failures": 26,
+      "bler": 0.052,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 5,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1774.375,
+          "p50_us": 1781.483,
+          "p95_us": 1826.48,
+          "p99_us": 1860.02,
+          "max_us": 1941.099
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.03,
+          "p50_us": 352.938,
+          "p95_us": 365.771,
+          "p99_us": 377.562,
+          "max_us": 486.931
+        }
+      }
+    },
+    {
+      "seed": 2609272,
+      "snr_db": 6.5,
+      "frames": 500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 2,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1720.987,
+          "p50_us": 1716.612,
+          "p95_us": 1799.773,
+          "p99_us": 1866.436,
+          "max_us": 2080.591
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.176,
+          "p50_us": 353.897,
+          "p95_us": 366.646,
+          "p99_us": 371.271,
+          "max_us": 394.602
+        }
+      }
+    },
+    {
+      "seed": 2609272,
+      "snr_db": 7.0,
+      "frames": 500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1663.492,
+          "p50_us": 1648.865,
+          "p95_us": 1721.278,
+          "p99_us": 1757.859,
+          "max_us": 1782.066
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.123,
+          "p50_us": 353.897,
+          "p95_us": 366.104,
+          "p99_us": 370.021,
+          "max_us": 373.854
+        }
+      }
+    },
+    {
+      "seed": 2609273,
+      "snr_db": 5.5,
+      "frames": 500,
+      "failures": 328,
+      "bler": 0.656,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1802.753,
+          "p50_us": 1802.607,
+          "p95_us": 1839.938,
+          "p99_us": 1938.099,
+          "max_us": 2174.294
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 356.69,
+          "p50_us": 353.896,
+          "p95_us": 366.646,
+          "p99_us": 397.228,
+          "max_us": 564.426
+        }
+      }
+    },
+    {
+      "seed": 2609273,
+      "snr_db": 6.0,
+      "frames": 500,
+      "failures": 22,
+      "bler": 0.044,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1759.382,
+          "p50_us": 1763.359,
+          "p95_us": 1825.272,
+          "p99_us": 2062.467,
+          "max_us": 2124.38
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.258,
+          "p50_us": 353.563,
+          "p95_us": 367.646,
+          "p99_us": 374.646,
+          "max_us": 389.228
+        }
+      }
+    },
+    {
+      "seed": 2609273,
+      "snr_db": 6.5,
+      "frames": 500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1732.505,
+          "p50_us": 1732.61,
+          "p95_us": 1806.523,
+          "p99_us": 1850.729,
+          "max_us": 2044.093
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 357.621,
+          "p50_us": 354.938,
+          "p95_us": 369.937,
+          "p99_us": 406.269,
+          "max_us": 563.719
+        }
+      }
+    },
+    {
+      "seed": 2609273,
+      "snr_db": 7.0,
+      "frames": 500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "logical_symbol_calls": 6000,
+      "physical_a100_runs": 500,
+      "fallback_axes": 0,
+      "rejected": 0,
+      "timing": {
+        "FFT_rotation_to_RX_return": {
+          "count": 490,
+          "avg_us": 1680.115,
+          "p50_us": 1677.031,
+          "p95_us": 1747.735,
+          "p99_us": 1769.15,
+          "max_us": 2035.761
+        },
+        "FFT_rotation": {
+          "count": 490,
+          "avg_us": 355.119,
+          "p50_us": 353.23,
+          "p95_us": 366.146,
+          "p99_us": 372.812,
+          "max_us": 622.215
+        }
+      }
+    }
+  ],
+  "summary": [
+    {
+      "snr_db": 5.5,
+      "frames": 1500,
+      "failures": 1178,
+      "bler": 0.7853333333333333,
+      "false_positives": 0,
+      "mean_rx_us": 1792.2296666666666,
+      "mean_p99_us": 1897.4626666666666,
+      "max_rx_us": 2174.294
+    },
+    {
+      "snr_db": 6.0,
+      "frames": 1500,
+      "failures": 266,
+      "bler": 0.17733333333333334,
+      "false_positives": 0,
+      "mean_rx_us": 1772.8976666666667,
+      "mean_p99_us": 1959.834,
+      "max_rx_us": 2124.38
+    },
+    {
+      "snr_db": 6.5,
+      "frames": 1500,
+      "failures": 2,
+      "bler": 0.0013333333333333333,
+      "false_positives": 0,
+      "mean_rx_us": 1740.7783333333334,
+      "mean_p99_us": 1910.5726666666667,
+      "max_rx_us": 2080.591
+    },
+    {
+      "snr_db": 7.0,
+      "frames": 1500,
+      "failures": 0,
+      "bler": 0.0,
+      "false_positives": 0,
+      "mean_rx_us": 1680.44,
+      "mean_p99_us": 1775.0386666666666,
+      "max_rx_us": 2035.761
+    }
+  ]
+}
