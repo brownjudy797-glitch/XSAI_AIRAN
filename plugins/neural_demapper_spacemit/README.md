@@ -121,4 +121,8 @@ and full RX wall time.
 - Timing clock: `CLOCK_MONOTONIC`.
 
 See `docs/` for the installation/call/measurement review, current optimization
-issues, and Stage-18 fixed-session cache results.
+issues, Stage-18 fixed-session cache results, and the Stage-19 paired end-to-end
+BLER/RX-latency gate. Stage 19 confirms that batching reaches the complete
+`nr_ulsim` receive chain, but the current model fails the BLER and latency
+acceptance gates and is not approved as a replacement for the conventional
+demapper.
