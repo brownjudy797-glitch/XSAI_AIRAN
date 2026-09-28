@@ -78,6 +78,12 @@ Initial timing sample:
 ./run_smoke.sh 2000
 ```
 
+Five-repeat gate with preserved raw logs and JSON:
+
+```bash
+python3 tools/run_repeat_gate.py --repeats 5 --iterations 2000
+```
+
 A valid run prints all of the following:
 
 ```text
