@@ -50,18 +50,8 @@ An idle board should report `runtime=available` and `available_blocks=8/8`.
 
 ## 2. Clone and install
 
-This repository is currently private. First try the clone command below. If
-Git requests authentication, do not enter a GitHub account password and do not
-paste an access token into chat, screenshots or shared shell history. With an
-already installed GitHub CLI, use the official web login flow:
-
-```bash
-gh auth login --hostname github.com --git-protocol https --web
-gh auth setup-git
-gh auth status
-```
-
-Complete authorization in the browser, then clone:
+The repository is public. No GitHub account, password, token or `gh auth login`
+is required. Clone it directly on the K3:
 
 ```bash
 cd /home/ubuntu
@@ -74,8 +64,7 @@ chmod +x install.sh run_smoke.sh
 ```
 
 `INSTALL_COMPLETE` means the fixed 3312-RE model, plugin and benchmark were
-built successfully. Do not use `gh auth status --show-token` or disclose the
-credential stored on the K3.
+built successfully.
 
 ## 3. Run
 
