@@ -41,3 +41,20 @@ identical to the original experiment binary. `bash verify.sh` passed 12/24 RB
 with zero LLR sign mismatches and maximum absolute difference 1 against its
 NumPy reference. The check ran alongside the online gNB, so its printed
 latency is not a formal performance result.
+
+## Isolated stage profiling
+
+Build an **offline-only** profiled candidate with `K3NRX_PROFILE=1` and a
+distinct `K3NRX_OUTPUT_NAME` when invoking `build.sh`; do not replace the
+library loaded by a running gNB. Its shutdown summary separates channel-cache
+construction, input packing, dense layers and LLR quantization. The regular
+`verify.sh` continues to use the unprofiled build.
+
+On K3 with no gNB running (2026-10-06), 100 repeated 24-RB calls had zero LLR
+sign mismatches and maximum absolute LLR difference 1. The profiled A100
+inference average was about 368 µs: channel cache 66 µs, input packing 43 µs,
+dense layers 200 µs and quantization 22 µs; the remainder includes worker
+handoff and measurement overhead. Python call wall time (~466 µs) is not a
+PHY/PUSCH deadline measurement. An 8-output dense variant did not show a
+meaningful overall speedup in the isolated check. These observations do not
+clear the earlier 3 Mbps real-time gate or the 51/106-RB support gate.

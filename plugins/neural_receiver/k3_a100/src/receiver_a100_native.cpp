@@ -80,6 +80,8 @@ unsigned long long g_calls = 0;
 unsigned long long g_total_us = 0;
 #if K3NRX_PROFILE
 unsigned long long g_preprocess_ns = 0;
+unsigned long long g_channel_cache_ns = 0;
+unsigned long long g_input_pack_ns = 0;
 unsigned long long g_dense_ns = 0;
 unsigned long long g_quantize_ns = 0;
 #endif
@@ -340,8 +342,10 @@ void run_on_a100(void *opaque) {
     }
   }
 #if K3NRX_PROFILE
-  g_preprocess_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+  const auto cache_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::steady_clock::now() - cache_start).count();
+  g_channel_cache_ns += cache_ns;
+  g_preprocess_ns += cache_ns;
 #endif
 #endif
   for (size_t base = 0; base < elements; base += kBatch) {
@@ -430,8 +434,10 @@ void run_on_a100(void *opaque) {
             quantize(-g_llr_gain * scratch.outputs[bit][re]);
 #if K3NRX_PROFILE
     const auto quantize_end = std::chrono::steady_clock::now();
-    g_preprocess_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+    const auto input_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
         preprocess_end - stage_start).count();
+    g_input_pack_ns += input_ns;
+    g_preprocess_ns += input_ns;
     g_dense_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
         dense_end - preprocess_end).count();
     g_quantize_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -475,9 +481,12 @@ extern "C" int spacemit_receiver_runtime_shutdown(void) {
               g_calls, g_calls ? g_total_us / g_calls : 0);
 #if K3NRX_PROFILE
   if (g_calls) {
-    std::printf("K3_NATIVE_STAGE avg_us preprocess=%.3f dense=%.3f "
+    std::printf("K3_NATIVE_STAGE avg_us preprocess=%.3f "
+                "channel_cache=%.3f input_pack=%.3f dense=%.3f "
                 "quantize=%.3f\n",
                 (double)g_preprocess_ns / g_calls / 1000.0,
+                (double)g_channel_cache_ns / g_calls / 1000.0,
+                (double)g_input_pack_ns / g_calls / 1000.0,
                 (double)g_dense_ns / g_calls / 1000.0,
                 (double)g_quantize_ns / g_calls / 1000.0);
   }
