@@ -30,6 +30,7 @@ git rev-parse HEAD
 3. [`plugins/neural_receiver/k3_a100`](../plugins/neural_receiver/k3_a100/README.md) 与 [`plugins/neural_demapper/k3_a100`](../plugins/neural_demapper/k3_a100/README.md)：两种 AI 插件的不同入口。
 4. [真实 UE Quickstart](../tutorials/quickstart/README.md)：只针对已部署的 K3。
 5. [AI 插件接入与观察](AI_PLUGIN_INTEGRATION.md)：从独立构建走到运行时加载所需的检查。
+6. [Baseline 实验方法](BASELINE_METHOD.md)：正式 RFsim、B210 和 AI/传统对照的变量控制、结果记录与失效判据。
 
 路径约定：GitHub 仓库根目录记为 `REPO`；下文命令在仓库根目录执行。`vendor/` 是发布快照，`ext/` 是目标机器上准备的实际源码，`.runtime/`、`build/`、`results/` 属于本地运行产物，不能混为一谈。
 
@@ -96,6 +97,8 @@ bash verify.sh
 5. 若要切换 AI 插件，先保存当前服务定义和回滚入口，在可中断业务的实验窗口执行。发布仓库的 `build.sh` / `verify.sh` 本身不会切换服务。
 
 不要把 `ping` 成功、UDP 数据最终到达、AI 日志出现调用次数，分别误写成“高负载实时性通过”或“长期稳定性通过”。每轮结论须写明 RB/MCS、包长、时长、发/收窗口、错误/重传和服务版本。
+
+需要形成可比较的实验结果时，按 [Baseline 实验方法](BASELINE_METHOD.md) 固定条件、先做本地冒烟，再做上下行独立负载窗口和 AI/传统 A/B；旧 RFsim 启动脚本会停止现有 OAI 进程，不能当作在线 B210 链路的无扰采集器。
 
 ## 6. 计时与性能比较
 

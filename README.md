@@ -55,6 +55,7 @@ Windows/Quectel UE ⇄ 5G 空口 ⇄ B210 ⇄ K3 gNB (OAI)
 ## 文档索引
 
 - [项目与环境指南](docs/K3_PROJECT_GUIDE.md)：依赖、目录、构建、验证、常见故障。
+- [Baseline 实验方法](docs/BASELINE_METHOD.md)：区分 RFsim、真实 UE 与 AI/传统对照，统一记录和有效性判据。
 - [AI 插件接入与观察](docs/AI_PLUGIN_INTEGRATION.md)：loader、模型、A100 线程与回退。
 - [实验状态](docs/EXPERIMENT_STATUS.md)：已通过、未通过和仍待验证的项目。
 - [真实 UE 接入 Quickstart](tutorials/quickstart/README.md)：已部署 K3 的现场操作。
