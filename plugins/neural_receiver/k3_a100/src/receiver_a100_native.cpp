@@ -17,6 +17,10 @@
 extern "C" int a100_worker_start(void);
 extern "C" int a100_worker_call(void (*fn)(void *), void *arg);
 extern "C" void a100_worker_stop(void);
+extern "C" int a100_worker_pool_start(void);
+extern "C" int a100_worker_pool_call(void (*fn)(void *),
+                                      void *const args[4], unsigned mask);
+extern "C" void a100_worker_pool_stop(void);
 
 namespace {
 #ifndef K3NRX_BATCH
@@ -40,6 +44,11 @@ namespace {
 #ifndef K3NRX_HCACHE
 #define K3NRX_HCACHE 0
 #endif
+#ifndef K3NRX_WORKERS
+#define K3NRX_WORKERS 1
+#endif
+static_assert(K3NRX_WORKERS == 1 || K3NRX_WORKERS == 2 ||
+              K3NRX_WORKERS == 4);
 constexpr size_t kInput = K3NRX_INPUT;
 constexpr size_t kHidden = K3NRX_HIDDEN;
 constexpr size_t kOutput = 4;
@@ -70,11 +79,23 @@ struct Request {
   float scale;
   const int32_t *dmrs_positions;
   int16_t *outputs;
+#if K3NRX_WORKERS > 1
+  size_t first_element;
+  size_t last_element;
+  Scratch *scratch;
+#endif
 };
 
 std::mutex g_mutex;
 std::unique_ptr<float[]> g_weights;
 std::unique_ptr<Scratch> g_scratch;
+#if K3NRX_WORKERS > 1
+std::unique_ptr<Scratch> g_scratch_second;
+#endif
+#if K3NRX_WORKERS == 4
+std::unique_ptr<Scratch> g_scratch_third;
+std::unique_ptr<Scratch> g_scratch_fourth;
+#endif
 const float *g_w1, *g_b1, *g_w2, *g_b2, *g_w3, *g_b3;
 unsigned long long g_calls = 0;
 unsigned long long g_total_us = 0;
@@ -289,7 +310,19 @@ void run_on_a100(void *opaque) {
   const auto &request = *static_cast<Request *>(opaque);
   const size_t pilots_per_dmrs = request.subcarriers / 2;
   const size_t elements = request.subcarriers * 13;
+#if K3NRX_WORKERS > 1
+  Scratch &scratch = *request.scratch;
+  const size_t first_element = request.first_element;
+  const size_t last_element = request.last_element;
+  const size_t first_subcarrier = first_element / 13;
+  const size_t last_subcarrier = (last_element + 12) / 13;
+#else
   Scratch &scratch = *g_scratch;
+  const size_t first_element = 0;
+  const size_t last_element = elements;
+  const size_t first_subcarrier = 0;
+  const size_t last_subcarrier = request.subcarriers;
+#endif
 #if K3NRX_HCACHE
 #if K3NRX_PROFILE
   const auto cache_start = std::chrono::steady_clock::now();
@@ -315,7 +348,8 @@ void run_on_a100(void *opaque) {
         }
       }
     }
-    for (size_t subcarrier = 0; subcarrier < request.subcarriers; ++subcarrier) {
+    for (size_t subcarrier = first_subcarrier;
+         subcarrier < last_subcarrier; ++subcarrier) {
       const size_t first_pilot = subcarrier / 2;
       const size_t second_pilot = first_pilot +
           ((subcarrier & 1) && first_pilot + 1 < pilots_per_dmrs);
@@ -348,11 +382,11 @@ void run_on_a100(void *opaque) {
   g_preprocess_ns += cache_ns;
 #endif
 #endif
-  for (size_t base = 0; base < elements; base += kBatch) {
+  for (size_t base = first_element; base < last_element; base += kBatch) {
 #if K3NRX_PROFILE
     const auto stage_start = std::chrono::steady_clock::now();
 #endif
-    const size_t count = std::min(kBatch, elements - base);
+    const size_t count = std::min(kBatch, last_element - base);
     for (size_t re = 0; re < count; ++re) {
       const size_t index = base + re;
       const size_t subcarrier = index / 13;
@@ -463,20 +497,53 @@ extern "C" int spacemit_receiver_runtime_init(void) {
       std::strcmp(interpolate_text, "1") == 0;
   if (!load_weights()) return -1;
   g_scratch = std::make_unique<Scratch>();
-  if (a100_worker_start() != 0) {
+#if K3NRX_WORKERS > 1
+  g_scratch_second = std::make_unique<Scratch>();
+#if K3NRX_WORKERS == 4
+  g_scratch_third = std::make_unique<Scratch>();
+  g_scratch_fourth = std::make_unique<Scratch>();
+#endif
+  const int worker_status = a100_worker_pool_start();
+#else
+  const int worker_status = a100_worker_start();
+#endif
+  if (worker_status != 0) {
     g_scratch.reset();
+#if K3NRX_WORKERS > 1
+    g_scratch_second.reset();
+#if K3NRX_WORKERS == 4
+    g_scratch_third.reset();
+    g_scratch_fourth.reset();
+#endif
+#endif
     g_weights.reset();
     return -1;
   }
+#if K3NRX_WORKERS == 4
+  std::printf("K3_NATIVE_JOINT_RECEIVER ready=1 ai_cpu=8-11 workers=4 batch=%zu "
+              "weights=%zu llr_gain=%.3f h_interp=%d\n",
+              kBatch, kWeightCount, g_llr_gain, g_interpolate_channel);
+#elif K3NRX_WORKERS == 2
+  std::printf("K3_NATIVE_JOINT_RECEIVER ready=1 ai_cpu=8,9 workers=2 batch=%zu "
+              "weights=%zu llr_gain=%.3f h_interp=%d\n",
+              kBatch, kWeightCount, g_llr_gain, g_interpolate_channel);
+#else
   std::printf("K3_NATIVE_JOINT_RECEIVER ready=1 ai_cpu=8 batch=%zu "
               "weights=%zu llr_gain=%.3f h_interp=%d\n",
               kBatch, kWeightCount, g_llr_gain, g_interpolate_channel);
+#endif
   return 0;
 }
 
 extern "C" int spacemit_receiver_runtime_shutdown(void) {
   std::lock_guard<std::mutex> lock(g_mutex);
-  if (g_weights) a100_worker_stop();
+  if (g_weights) {
+#if K3NRX_WORKERS > 1
+    a100_worker_pool_stop();
+#else
+    a100_worker_stop();
+#endif
+  }
   std::printf("K3_NATIVE_JOINT_RECEIVER calls=%llu avg_us=%llu\n",
               g_calls, g_calls ? g_total_us / g_calls : 0);
 #if K3NRX_PROFILE
@@ -492,6 +559,13 @@ extern "C" int spacemit_receiver_runtime_shutdown(void) {
   }
 #endif
   g_scratch.reset();
+#if K3NRX_WORKERS > 1
+  g_scratch_second.reset();
+#if K3NRX_WORKERS == 4
+  g_scratch_third.reset();
+  g_scratch_fourth.reset();
+#endif
+#endif
   g_weights.reset();
   return 0;
 }
@@ -518,10 +592,42 @@ extern "C" int spacemit_receiver_decode(
   if (!g_weights) return 0;
   Request request{symbols, h_hat, num_subcarriers,
                   norm_scale / 256.0f, dmrs_ofdm_pos, outputs};
+#if K3NRX_WORKERS > 1
+  const size_t elements = num_subcarriers * 13;
+  const size_t active_workers = num_subcarriers <= 12 ? 1 :
+#if K3NRX_WORKERS == 4
+      (num_subcarriers >= 288 ? 4 : 2);
+#else
+      2;
+#endif
+  const size_t share = ((elements + active_workers - 1) / active_workers +
+                        kBatch - 1) / kBatch * kBatch;
+  Request requests[K3NRX_WORKERS];
+  void *arguments[4] = {};
+  Scratch *scratches[4] = {g_scratch.get(), g_scratch_second.get(),
+#if K3NRX_WORKERS == 4
+                            g_scratch_third.get(), g_scratch_fourth.get()
+#else
+                            nullptr, nullptr
+#endif
+  };
+  for (size_t i = 0; i < active_workers; ++i) {
+    requests[i] = request;
+    requests[i].first_element = std::min(i * share, elements);
+    requests[i].last_element = std::min((i + 1) * share, elements);
+    requests[i].scratch = scratches[i];
+    arguments[i] = &requests[i];
+  }
+#endif
   if (input_stats) stop_meas(input_stats);
   if (inference_stats) start_meas(inference_stats);
   const auto begin = std::chrono::steady_clock::now();
+#if K3NRX_WORKERS > 1
+  const int result = a100_worker_pool_call(
+      run_on_a100, arguments, (1u << active_workers) - 1);
+#else
   const int result = a100_worker_call(run_on_a100, &request);
+#endif
   const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
       std::chrono::steady_clock::now() - begin).count();
   if (inference_stats) stop_meas(inference_stats);

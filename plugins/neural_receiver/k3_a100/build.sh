@@ -12,6 +12,7 @@ hidden=${K3NRX_HIDDEN:-24}
 block4=${K3NRX_BLOCK4:-1}
 block8=${K3NRX_BLOCK8:-0}
 profile=${K3NRX_PROFILE:-0}
+workers=${K3NRX_WORKERS:-1}
 hcache=${K3NRX_HCACHE:-1}
 fast_math=${K3NRX_FAST_MATH:-1}
 name=${K3NRX_OUTPUT_NAME:-libreceiver_a100_native_h24_b4_b256_hcache_power.so}
@@ -19,10 +20,17 @@ name=${K3NRX_OUTPUT_NAME:-libreceiver_a100_native_h24_b4_b256_hcache_power.so}
 case "$batch" in 64|128|256) ;; *) echo "Unsupported batch: $batch" >&2; exit 2;; esac
 case "$input" in 4|6) ;; *) echo "Unsupported input: $input" >&2; exit 2;; esac
 case "$hidden" in 16|24|32) ;; *) echo "Unsupported hidden: $hidden" >&2; exit 2;; esac
+case "$workers" in 1|2|4) ;; *) echo "Unsupported workers: $workers" >&2; exit 2;; esac
+if [[ "$workers" != 1 && "$profile" == 1 ]]; then
+  echo "Multi-worker profiling counters are not synchronized" >&2; exit 2
+fi
 for value in "$block4" "$block8" "$profile" "$hcache" "$fast_math"; do
   case "$value" in 0|1) ;; *) echo "Expected 0 or 1: $value" >&2; exit 2;; esac
 done
 case "$name" in libreceiver_a100_native*.so) ;; *) echo "Invalid output name" >&2; exit 2;; esac
+if [[ "$workers" != 1 && "$name" == libreceiver_a100_native_h24_b4_b256_hcache_power.so ]]; then
+  echo "Multi-worker candidate requires a distinct output name" >&2; exit 2
+fi
 
 mkdir -p "$out"
 includes=(
@@ -40,8 +48,11 @@ gcc -O2 -fPIC -std=gnu11 -DMAX_NUM_CCs=1 -DNB_ANTENNAS_RX=4 \
   -c "$backend/src/nr_receiver_spacemit.c" -o "$out/nr_receiver_a100_native.o"
 
 # HMP switching must happen before the worker executes vector instructions.
+worker_source="$backend/src/a100_worker.c"
+if [[ "$workers" != 1 ]]; then worker_source="$backend/src/a100_worker_pool.c"; fi
 gcc -O2 -fPIC -std=gnu11 -march=rv64gc -mabi=lp64d \
-  -c "$backend/src/a100_worker.c" -o "$out/a100_worker.o"
+  -DK3NRX_WORKERS="$workers" \
+  -c "$worker_source" -o "$out/a100_worker.o"
 
 optimization=(-O3)
 if [[ "$fast_math" == 1 ]]; then optimization=(-Ofast); fi
@@ -49,6 +60,7 @@ g++ "${optimization[@]}" -fPIC -std=gnu++17 \
   -DK3NRX_BATCH="$batch" -DK3NRX_INPUT="$input" -DK3NRX_HIDDEN="$hidden" \
   -DK3NRX_BLOCK4="$block4" -DK3NRX_BLOCK8="$block8" \
   -DK3NRX_PROFILE="$profile" -DK3NRX_HCACHE="$hcache" \
+  -DK3NRX_WORKERS="$workers" \
   "${vector_arch[@]}" "${includes[@]}" \
   -c "$backend/src/receiver_a100_native.cpp" \
   -o "$out/receiver_a100_native.o"

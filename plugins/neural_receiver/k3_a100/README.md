@@ -58,3 +58,38 @@ handoff and measurement overhead. Python call wall time (~466 µs) is not a
 PHY/PUSCH deadline measurement. An 8-output dense variant did not show a
 meaningful overall speedup in the isolated check. These observations do not
 clear the earlier 3 Mbps real-time gate or the 51/106-RB support gate.
+
+## Experimental A100 worker-pool candidates
+
+`K3NRX_WORKERS=2` or `4` builds a separate candidate that divides one PUSCH's
+REs across A100 CPU8–9 or CPU8–11. The four-worker binary activates only one
+worker at 1 RB, two below 24 RB, and four at 24 RB; idle workers remain
+allocated but do no inference. Each active worker builds only its portion of
+the channel cache. The default remains the original single-worker library;
+the build script refuses to give a multiworker build its stable filename.
+
+On an isolated K3 with gNB stopped, set `OAI_ROOT` to the matching OAI source
+tree and run `bash verify_multiworker.sh 2` or `bash verify_multiworker.sh 4`.
+Each builds into its own `build/workers-N/` directory and checks 1/5/12/24 RB
+against the NumPy oracle. It does not start, stop or reconfigure gNB/CN5G.
+
+The 2026-10-06 deterministic OAI `nr_ulsim` gate used TDL-B `B,l,56`, MCS 10,
+1,000 frames and matched seed/weights for each single/quad pair:
+
+| Case | Single CRC errors | Quad CRC errors | Single RX PUSCH | Quad RX PUSCH |
+|---|---:|---:|---:|---:|
+| 24 RB, 12 dB, seed 2609307 | 149 | 149 | 662.86 µs | 448.72 µs |
+| 12 RB, 12 dB, seed 2609307 | 192 | 192 | 407.89 µs | 331.17 µs |
+| 24 RB, 10 dB, seed 2609308 | 282 | 282 | 661.09 µs | 445.92 µs |
+
+The two-worker 24-RB candidate measured 523.56 µs RX PUSCH in the first
+case. NumPy checks had zero LLR sign mismatches and maximum absolute difference
+1 for 1/5/12/24 RB; a 1,000-call 24-RB stress check passed. Workers reported
+their CPU8–11 affinity and TCM stayed 8/8 free. The default single-worker
+library rebuilt to the prior SHA-256 above.
+
+**These are offline averages, not a real-link 3 Mbps or tail-deadline pass.**
+The 24-RB quad mean is below a 0.5 ms slot, but its maximum plugin time and
+OAI scheduling tails still need gates. Keep both candidates out of the live
+gNB until real-link, multi-SNR/seed and resource-contention tests pass. Neither
+candidate extends the receiver beyond 24 RB.

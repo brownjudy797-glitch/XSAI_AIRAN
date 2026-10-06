@@ -119,7 +119,7 @@ def main() -> int:
     parser.add_argument("library", type=Path)
     parser.add_argument("weights", type=Path)
     parser.add_argument("--repeats", type=int, default=20)
-    parser.add_argument("--rb", type=int, choices=(12, 24), action="append")
+    parser.add_argument("--rb", type=int, choices=(1, 5, 12, 24), action="append")
     args = parser.parse_args()
     library = ctypes.CDLL(str(args.library.resolve()))
     library.spacemit_receiver_runtime_init.restype = ctypes.c_int
