@@ -1,0 +1,40 @@
+diff --git a/openair1/PHY/defs_gNB.h b/openair1/PHY/defs_gNB.h
+--- a/openair1/PHY/defs_gNB.h
++++ b/openair1/PHY/defs_gNB.h
+@@ -538,6 +538,11 @@ typedef struct PHY_VARS_gNB_s {
+   time_stats_t ulsch_resource_extraction_stats;
+   time_stats_t ulsch_channel_compensation_stats;
+   time_stats_t ulsch_llr_stats;
++  /// Neural receiver plugin timing, using the same OAI time_stats_t clock.
++  time_stats_t neural_receiver_input_stats;
++  time_stats_t neural_receiver_inference_stats;
++  time_stats_t neural_receiver_output_stats;
++  time_stats_t neural_receiver_total_stats;
+   time_stats_t rx_srs_stats;
+   time_stats_t generate_srs_stats;
+   time_stats_t get_srs_signal_stats;
+diff --git a/executables/nr-gnb.c b/executables/nr-gnb.c
+--- a/executables/nr-gnb.c
++++ b/executables/nr-gnb.c
+@@ -267,6 +267,10 @@ static void dump_nr_I0_stats(FILE *fd, PHY_VARS_gNB *gNB)
+   output += print_meas_log(&gNB->ulsch_resource_extraction_stats, "PUSCH resource extraction", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_channel_compensation_stats, "PUSCH channel compensation", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_llr_stats, "PUSCH LLR computation", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_input_stats, "Neural receiver input", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_inference_stats, "Neural receiver A100 inference", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_output_stats, "Neural receiver LLR output", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_total_stats, "Neural receiver total", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ul_indication_stats, "UL Indication", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->slot_indication_stats, "Slot Indication", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->rx_pusch_stats, "PUSCH inner-receiver", NULL, NULL, output, end - output);
+@@ -342,6 +346,10 @@ static void *nrL1_stats_thread(void *param)
+   reset_meas(&gNB->ulsch_resource_extraction_stats);
+   reset_meas(&gNB->ulsch_channel_compensation_stats);
+   reset_meas(&gNB->ulsch_llr_stats);
++  reset_meas(&gNB->neural_receiver_input_stats);
++  reset_meas(&gNB->neural_receiver_inference_stats);
++  reset_meas(&gNB->neural_receiver_output_stats);
++  reset_meas(&gNB->neural_receiver_total_stats);
+   reset_meas(&gNB->ul_indication_stats);
+   reset_meas(&gNB->slot_indication_stats);
+   reset_meas(&gNB->rx_pusch_stats);

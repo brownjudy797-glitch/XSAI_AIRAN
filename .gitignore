@@ -47,3 +47,16 @@ artifacts/
 
 # Independent architecture checks
 .build/
+
+# Do not accidentally add raw field captures or host identity material.
+*.pcap
+*.pcapng
+*.sqlite
+*.sqlite3
+*.db
+*.mp4
+*.tgz
+*.tar.gz
+*.pem
+*.key
+*.uicc.conf
