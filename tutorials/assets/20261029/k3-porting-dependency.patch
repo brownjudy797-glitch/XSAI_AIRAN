@@ -1,0 +1,11 @@
+--- a/install-online.sh
++++ b/install-online.sh
+@@ -43,7 +43,7 @@
+     ;;
+   cn5g)
+     sudo apt-get update
+-    sudo apt-get install -y ca-certificates curl zstd iproute2 iptables mysql-serve
++    sudo apt-get install -y ca-certificates curl zstd iproute2 iptables mysql-server
+     download cn5g-riscv64-v2.1.0.tar.zst "$ROOT/02-cn5g/cn5g-payload.tar.zst"
+     sudo "$ROOT/install.sh" cn5g "${2:-}"
+     ;;

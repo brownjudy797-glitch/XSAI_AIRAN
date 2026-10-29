@@ -2,7 +2,7 @@
 
 基于 Sionna Research Kit 与 OpenAirInterface (OAI) 的 5G NR 实验项目，重点是把真实空口 gNB、5G 核心网和 AI 物理层插件运行在进迭时空 K3 上，并研究 X100/A100 异构调度与物理层耗时。GitHub 仓库名为 `XSAI_AIRAN`；实验机上的工程路径仍是 `/home/ubuntu/sionna-rk`。
 
-本仓库是**源码、适配器、模型、脚本和可复现实验说明**，不是包含 SIM 数据、数据库、编译产物和设备配置的一键镜像。首次接触请先读 [项目与环境指南](docs/K3_PROJECT_GUIDE.md)；已经部署好 K3 的读者可看 [真实 UE 接入教程](tutorials/quickstart/README.md)。
+本仓库是**源码、适配器、模型、脚本和可复现实验说明**，不是包含 SIM 数据、数据库、编译产物和设备配置的一键镜像。从 [统一教程入口](tutorials/README.md) 选择 K3、x86、ARM64 或核心网路线；项目背景见 [项目与环境指南](docs/K3_PROJECT_GUIDE.md)。已经部署好 K3 的读者可看 [真实 UE 接入教程](tutorials/quickstart/README.md)。
 
 ## 项目包含什么
 
@@ -36,6 +36,8 @@ Windows/Quectel UE ⇄ 5G 空口 ⇄ B210 ⇄ K3 gNB (OAI)
 这些结论是特定硬件、版本和配置下的实验记录，不是产品性能保证；详见 [实验状态与证据口径](docs/EXPERIMENT_STATUS.md)。
 
 ## 从哪里开始
+
+从官方 `sionna-rk` 的 `0abdce3` 开始进行 K3 RV64 CPU-only 移植，请看 [完整部署教程（仓库下载版）](tutorials/k3-rv64/README.md)。补丁可直接下载，附带 SHA256 与重复应用检查；不要求向终端粘贴大型 diff。
 
 1. **只阅读或审查代码**：先看 [架构](docs/ARCHITECTURE.md)、[项目与环境指南](docs/K3_PROJECT_GUIDE.md) 和 [`SOURCE_SNAPSHOT.json`](SOURCE_SNAPSHOT.json)。
 2. **已有 K3 环境，检查真实 UE 链路**：按 [Quickstart](tutorials/quickstart/README.md) 执行只读检查，再决定是否启动。它不会创建核心网订阅或安装驱动。
