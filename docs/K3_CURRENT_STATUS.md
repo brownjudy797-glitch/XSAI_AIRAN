@@ -3,6 +3,8 @@
 
 核查时间：2026-10-29 16:07:14（Asia/Shanghai）。这是一次远程只读快照，不代表之后的设备状态。
 
+同日后续另建隔离目录进行了源码编译和 RFsim 功能验证，未覆盖本页的历史观察。新部署入口与后续证据见 [复现审计](REPRODUCIBILITY_AUDIT.md) 和 [从零教程](../tutorials/reproduction/README.md)。
+
 ## 现场版本和运行状态
 
 | 项目 | 本次观察 |

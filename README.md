@@ -6,7 +6,7 @@
 
 ## 最新现场核查
 
-2026-10-29 已连接 K3 核对版本和部署完整性；gNB/nrUE 未运行，核心网进程仍在。见 [当前项目状态](docs/K3_CURRENT_STATUS.md)、[独立 DFT 基准](benchmarks/dft/README.md) 和 [审阅过的现场差异](snapshots/k3/20261029/README.md)。这是只读核查，不是新的实机验收。
+2026-10-29 已连接 K3 核对版本和部署完整性，并在独立目录用固定私有依赖完成全量构建、ideal/AWGN 同步与计时功能验证；原核心网与数据保留。新机请看 [从零复现教程](tutorials/reproduction/README.md) 和 [复现审计](docs/REPRODUCIBILITY_AUDIT.md)。先前只读观察见 [当前项目状态](docs/K3_CURRENT_STATUS.md)，另有 [独立 DFT 基准](benchmarks/dft/README.md) 和 [现场差异](snapshots/k3/20261029/README.md)；本次没有重新验收真实射频与正式性能。
 
 ## 项目包含什么
 
@@ -40,6 +40,8 @@ Windows/Quectel UE ⇄ 5G 空口 ⇄ B210 ⇄ K3 gNB (OAI)
 这些结论是特定硬件、版本和配置下的实验记录，不是产品性能保证；详见 [实验状态与证据口径](docs/EXPERIMENT_STATUS.md)。
 
 ## 从哪里开始
+
+**新机器与当前 K3 对齐**：先按 [从零构建与 RFsim 复现](tutorials/reproduction/README.md) 操作。该路线直接使用仓库快照，补齐私有 SIMDe/ASN1C、产物检查、同步验证和测量留档；检查结论见 [复现审计](docs/REPRODUCIBILITY_AUDIT.md)。需要真实 UE 时继续 [CN5G/B210 新机前提](tutorials/k3-cn5g/FROM_ZERO.md)。
 
 从官方 `sionna-rk` 的 `0abdce3` 开始进行 K3 RV64 CPU-only 移植，请看 [完整部署教程（仓库下载版）](tutorials/k3-rv64/README.md)。补丁可直接下载，附带 SHA256 与重复应用检查；不要求向终端粘贴大型 diff。
 
