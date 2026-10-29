@@ -37,6 +37,8 @@ Windows/Quectel UE ⇄ 5G 空口 ⇄ B210 ⇄ K3 gNB (OAI)
 
 ## 从哪里开始
 
+从官方 `sionna-rk` 的 `0abdce3` 开始进行 K3 RV64 CPU-only 移植，请看 [完整部署教程（仓库下载版）](tutorials/k3-rv64/README.md)。补丁可直接下载，附带 SHA256 与重复应用检查；不要求向终端粘贴大型 diff。
+
 1. **只阅读或审查代码**：先看 [架构](docs/ARCHITECTURE.md)、[项目与环境指南](docs/K3_PROJECT_GUIDE.md) 和 [`SOURCE_SNAPSHOT.json`](SOURCE_SNAPSHOT.json)。
 2. **已有 K3 环境，检查真实 UE 链路**：按 [Quickstart](tutorials/quickstart/README.md) 执行只读检查，再决定是否启动。它不会创建核心网订阅或安装驱动。
 3. **验证独立 PHY 算子**：在已配置 GCC 16/CMake 的 K3 上运行 `bash scripts/check-phy-architecture.sh reference`；支持 RVV 的目标再运行 `bash scripts/check-phy-architecture.sh rvv`。

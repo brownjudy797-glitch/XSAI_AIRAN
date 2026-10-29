@@ -1,0 +1,1125 @@
+diff --git a/Makefile b/Makefile
+index 24bf9d5..6608eeb 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,35 +3,34 @@
+ ## SPDX-License-Identifier: Apache-2.0
+ ##
+ 
+-GPU=
+-ifdef gpus
+-    GPU=--gpus=$(gpus)
+-endif
+-export GPU
++CPU_ONLY ?= 1
++export SIONNA_RK_CPU_ONLY := $(CPU_ONLY)
+ 
+ .PHONY: doc prepare-system sionna-rk build-gnb
+ 
+ prepare-system:
+ 	./scripts/configure-system.sh
+-	./scripts/build-custom-kernel.sh
+-	./scripts/install-custom-kernel.sh
+-	echo "Reboot to load the new kernel and continue the installation."
++	@if [ "$(CPU_ONLY)" != "1" ]; then \
++		./scripts/build-custom-kernel.sh; \
++		./scripts/install-custom-kernel.sh; \
++		echo "Reboot to load the new kernel and continue the installation."; \
++	else \
++		echo "CPU-only mode: skipping NVIDIA L4T custom kernel steps."; \
++	fi
+ 
+ sionna-rk:
+ 	./scripts/quickstart-oai.sh
+ 	./scripts/generate-configs.sh
+ 	./plugins/common/build_all_plugins.sh --host
+-	./plugins/common/build_all_plugins.sh --container
+ 
+ build-gnb:
+-	./scripts/build-oai-images.sh --debug ext/openairinterface5g
++	./scripts/build-oai-native.sh ext/openairinterface5g
+ 
+ doc: FORCE
+ 	cd doc && ./build_docs.sh
+ 
+ test:
+ 	./plugins/common/build_all_plugins.sh --host
+-	./plugins/common/build_all_plugins.sh --container
+ 	./plugins/testing/run_all_tests.sh --host
+ 
+ FORCE:
+diff --git a/patches/config/config.b200.patch b/patches/config/config.b200.patch
+index ecd1e81..0f8a10a 100644
+--- a/patches/config/config.b200.patch
++++ b/patches/config/config.b200.patch
+@@ -3,7 +3,7 @@ new file mode 100644
+ index 0000000..f71e8f6
+ --- /dev/null
+ +++ .env
+-@@ -0,0 +1,86 @@
++@@ -0,0 +1,83 @@
+ +# =============================================================================
+ +# Config Files
+ +# =============================================================================
+@@ -11,16 +11,13 @@ index 0000000..f71e8f6
+ +SYSTEM_CONFIG="../common/sys_config.yaml"
+ +GNB_CONFIG="../common/gnb.sa.band78.24prbs.conf"
+ +
+-+CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps
+-+CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+-+
+ +# =============================================================================
+ +# Image Tags
+ +# =============================================================================
+ +
+-+GNB_IMAGE=oai-gnb-cuda
+++GNB_IMAGE=oai-gnb
+ +GNB_TAG=latest
+-+UE_IMAGE=oai-nr-ue-cuda
+++UE_IMAGE=oai-nr-ue
+ +UE_TAG=latest
+ +AMF_TAG=v2.1.10
+ +SMF_TAG=v2.1.10
+diff --git a/patches/config/config.common.patch b/patches/config/config.common.patch
+index 112f323..5719318 100644
+--- a/patches/config/config.common.patch
++++ b/patches/config/config.common.patch
+@@ -139,7 +139,7 @@ index d531b15..a766cc0 100644
+          depends_on:
+              - oai-upf
+          networks:
+-@@ -84,320 +91,114 @@ services:
++@@ -84,320 +91,110 @@ services:
+                  ipv4_address: 192.168.72.135
+          healthcheck:
+              test: /bin/bash -c "ping -c 2 192.168.72.134"
+@@ -153,10 +153,9 @@ index d531b15..a766cc0 100644
+ -        container_name: rfsim5g-oai-gnb
+ -        cap_add:
+ -            - SYS_NICE
+-+        image: ${GNB_IMAGE:-oai-gnb-cuda}:${GNB_TAG:-latest}
+++        image: ${GNB_IMAGE:-oai-gnb}:${GNB_TAG:-latest}
+ +        container_name: oai-gnb
+ +        user: ${USER_ID:-0}:${GROUP_ID:-0}
+-+        runtime: nvidia
+          cap_drop:
+              - ALL
+ +        cap_add:
+@@ -181,8 +180,6 @@ index d531b15..a766cc0 100644
+ +            - /dev/bus/usb/:/dev/bus/usb/
+          volumes:
+ -            - ../../conf_files/gnb.sa.band78.106prb.rfsim.yaml:/opt/oai-gnb/etc/gnb.yaml
+-+            - /tmp/nvidia-mps:/tmp/nvidia-mps
+-+            - /tmp/nvidia-log:/tmp/nvidia-log
+ +            - ${GNB_CONFIG:-../common/gnb.sa.usrpb200.24prbs.conf}:/opt/oai-gnb/etc/gnb.conf
+ +            - ../../plugins:/opt/oai-gnb/plugins # mount all plugins for weights, logs, data capture, etc.
+ +        ipc: host
+@@ -199,9 +196,8 @@ index d531b15..a766cc0 100644
+ -        container_name: rfsim5g-oai-nr-ue
+ -        cap_drop:
+ -            - ALL
+-+        image: ${UE_IMAGE:-oai-nr-ue-cuda}:${UE_TAG:-latest}
+++        image: ${UE_IMAGE:-oai-nr-ue}:${UE_TAG:-latest}
+ +        container_name: oai-nr-ue
+-+        runtime: nvidia
+          cap_add:
+              - NET_ADMIN  # for interface bringup
+              - NET_RAW    # for ping
+diff --git a/patches/config/config.rfsim.patch b/patches/config/config.rfsim.patch
+index 5d20480..499c5f7 100644
+--- a/patches/config/config.rfsim.patch
++++ b/patches/config/config.rfsim.patch
+@@ -3,7 +3,7 @@ new file mode 100644
+ index 0000000..229917d
+ --- /dev/null
+ +++ .env
+-@@ -0,0 +1,86 @@
++@@ -0,0 +1,83 @@
+ +# =============================================================================
+ +# Config Files
+ +# =============================================================================
+@@ -12,15 +12,12 @@ index 0000000..229917d
+ +# Changing the number of PRBs requires to also update accordingly the UE_EXTRA_OPTIONS parameter below
+ +GNB_CONFIG="../common/gnb.sa.band78.106prbs.conf"
+ +
+-+CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps
+-+CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+-+
+ +# =============================================================================
+ +# Image Tags
+ +# =============================================================================
+ +
+-+GNB_IMAGE=oai-gnb-cuda
+-+UE_IMAGE=oai-nr-ue-cuda
+++GNB_IMAGE=oai-gnb
+++UE_IMAGE=oai-nr-ue
+ +
+ +GNB_TAG=latest
+ +UE_TAG=latest
+diff --git a/patches/config/config.testing.patch b/patches/config/config.testing.patch
+index c6bf85d..d84b19e 100644
+--- a/patches/config/config.testing.patch
++++ b/patches/config/config.testing.patch
+@@ -15,8 +15,8 @@ index 0000000..febf5bd
+ +# Image Tags
+ +# =============================================================================
+ +
+-+GNB_IMAGE=oai-gnb-cuda
+-+UE_IMAGE=oai-nr-ue-cuda
+++GNB_IMAGE=oai-gnb
+++UE_IMAGE=oai-nr-ue
+ +
+ +GNB_TAG=latest
+ +UE_TAG=latest
+diff --git a/patches/openairinterface5g.patch b/patches/openairinterface5g.patch
+index 3f71375..805fb96 100644
+--- a/patches/openairinterface5g.patch
++++ b/patches/openairinterface5g.patch
+@@ -10,23 +10,30 @@ index d1c6979e76..846a6b66ce 100644
+ +
+ +# Generated files
+ +host_product_family
+-diff --git a/.gitmodules b/.gitmodules
+-index 583c8d8758..b59dcaffa5 100644
+---- a/.gitmodules
+-+++ b/.gitmodules
+-@@ -1,4 +1,5 @@
+- [submodule "openair2/E2AP/flexric"]
+- 	path = openair2/E2AP/flexric
+--	url = ../flexric.git
+--	branch = remotes/origin/2025_w34.internal
+-+	url = https://gitlab.eurecom.fr/mosaic5g/flexric.git
+-+	branch = remotes/origin/service-models-integration
+-+
+ diff --git a/CMakeLists.txt b/CMakeLists.txt
+-index a71b1c3ea2..e721041ce5 100644
++index a71b1c3ea2..ece44ee7c4 100644
+ --- a/CMakeLists.txt
+ +++ b/CMakeLists.txt
+-@@ -2142,6 +2142,16 @@ endif (${T_TRACER})
++@@ -163,13 +163,16 @@ elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
++   else ()
++     set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -gdwarf-2 -mcpu=native -lgcc -lrt")
++   endif()
+++elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "riscv64")
+++  # RISC-V uses SIMDe portable fallbacks; no x86 or ARM native intrinsics.
+++  set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -gdwarf-2 -lgcc -lrt")
++ else()
++   message(FATAL_ERROR "compile for CPU architecture ${CPUARCH}, CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
++ endif()
++ 
++-if (NOT CROSS_COMPILE)
+++if (NOT CROSS_COMPILE AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "riscv64")
++   set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -march=native")
++-else ()
+++elseif(CROSS_COMPILE)
++   set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -march=armv8-a")
++ endif()
++ 
++@@ -2142,6 +2145,16 @@ endif (${T_TRACER})
+  include(${OPENAIR1_DIR}/PHY/CODING/nrLDPC_decoder/nrLDPC_tools/CMakeLists.txt)
+  
+  set(ENABLE_TESTS OFF CACHE STRING "Activate build of tests")
+@@ -43,13 +50,99 @@ index a71b1c3ea2..e721041ce5 100644
+  set_property(CACHE ENABLE_TESTS PROPERTY TYPE BOOL)
+  set(ENABLE_PHYSIM_TESTS OFF CACHE STRING "Activate build of physim tests")
+  set_property(CACHE ENABLE_PHYSIM_TESTS PROPERTY TYPE BOOL)
+-@@ -2187,3 +2197,6 @@ add_subdirectory(openair2)
++@@ -2187,3 +2200,6 @@ add_subdirectory(openair2)
+  add_subdirectory(openair3)
+  add_subdirectory(radio)
+  add_subdirectory(tests)
+ +if (ENABLE_PLUGINS)
+ +  add_subdirectory(plugins)
+ +endif ()
++diff --git a/cmake_targets/build_oai b/cmake_targets/build_oai
++index 658b0b858a..24620ce90c 100755
++--- a/cmake_targets/build_oai
+++++ b/cmake_targets/build_oai
++@@ -457,7 +457,12 @@ function main() {
++     # add some default libraries that should always be built
++     # for eNB, gNB, UEs, simulators
++     if [[ $gNB == 1 || $eNB == 1 || $UE == 1 || $nrUE == 1 || $SIMUS_PHY == 1 || $RU == 1 ]]; then
++-      TARGET_LIST="$TARGET_LIST params_libconfig coding rfsimulator dfts params_yaml vrtsim rf_emulator"
+++      if [[ "$(uname -m)" == "riscv64" ]]; then
+++        # Legacy LTE turbo coding contains x86 SSE/MMX-only sources; NR uses LDPC/polar targets.
+++        TARGET_LIST="$TARGET_LIST params_libconfig rfsimulator dfts params_yaml vrtsim rf_emulator"
+++      else
+++        TARGET_LIST="$TARGET_LIST params_libconfig coding rfsimulator dfts params_yaml vrtsim rf_emulator"
+++      fi
++     fi
++ 
++     mkdir -p $DIR/$BUILD_DIR/build
++diff --git a/cmake_targets/tools/build_helper b/cmake_targets/tools/build_helper
++index 49edfa91e8..6f692891f8 100755
++--- a/cmake_targets/tools/build_helper
+++++ b/cmake_targets/tools/build_helper
++@@ -103,6 +103,7 @@ get_distribution_release() {
++ check_supported_distribution() {
++     local distribution=$(get_distribution_release)
++     case "$distribution" in
+++        "ubuntu26.04") return 0 ;;
++         "ubuntu24.04") return 0 ;;
++         "ubuntu22.04") return 0 ;;
++         "ubuntu20.04") return 0 ;;
++@@ -575,7 +576,12 @@ install_asn1c_from_source(){
++     # Showing which version is used
++     git log -n1
++     autoreconf -iv
++-    ./configure --prefix /opt/asn1c/
+++    if [[ "$(uname -m)" == "riscv64" ]]; then
+++        # asn1c 0.9.29 triggers invalid pointer accesses when optimized on RV64.
+++        CFLAGS="-O0 -g3" CXXFLAGS="-O0 -g3" ./configure --prefix /opt/asn1c/
+++    else
+++        ./configure --prefix /opt/asn1c/
+++    fi
++     make -j`nproc`
++     $SUDO make install
++     cd -
++@@ -587,9 +593,27 @@ install_asn1c_from_source(){
++ 
++ install_simde_from_source(){
++     echo_info "\nInstalling SIMDE from source without test cases (header files only)"
+++    if [[ -f /usr/include/simde/simde-common.h ]]; then
+++      echo_info "SIMDE headers already installed; skipping download"
+++      return 0
+++    fi
++     cd /tmp
++     $SUDO rm -rf /tmp/simde
++-    git clone https://github.com/simd-everywhere/simde-no-tests.git /tmp/simde
+++    for attempt in 1 2 3; do
+++      git -c http.version=HTTP/1.1 clone https://github.com/simd-everywhere/simde-no-tests.git /tmp/simde && break
+++      echo_warning "SIMDE download failed (attempt ${attempt}/3)"
+++      $SUDO rm -rf /tmp/simde
+++    done
+++    if [[ ! -d /tmp/simde/.git ]]; then
+++      if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+++        echo_warning "GitHub unavailable; falling back to Ubuntu libsimde-dev"
+++        $SUDO apt-get update
+++        $SUDO apt-get install -y libsimde-dev
+++        return $?
+++      fi
+++      echo_error "Unable to install SIMDE headers"
+++      return 1
+++    fi
++     cd /tmp/simde
++     # we can specify a given version of SIMDE (sha-one or tag)
++     if [[ -v SIMDE_VERSION ]]; then
++diff --git a/common/utils/LOG/log.c b/common/utils/LOG/log.c
++index 1fe2280c15..17c757dddc 100644
++--- a/common/utils/LOG/log.c
+++++ b/common/utils/LOG/log.c
++@@ -61,7 +61,7 @@
++ 
++ // Fixme: a better place to be shure it is called 
++ void read_cpu_hardware (void) __attribute__ ((constructor));
++-#if !defined(__arm__) && !defined(__aarch64__) 
+++#if defined(__i386__) || defined(__x86_64__)
++   void read_cpu_hardware (void) {__builtin_cpu_init(); }
++ #else 
++   void read_cpu_hardware (void) {}
+ diff --git a/common/utils/actor/actor.h b/common/utils/actor/actor.h
+ index 023533d2d7..c6be9b1d1f 100644
+ --- a/common/utils/actor/actor.h
+@@ -79,6 +172,19 @@ index 825012ce6a..c8f8834b76 100644
+        if (!farray[i].fptr) {
+          fprintf(stderr, "[LOADER] load_module_shlib(): function %s not found: %s\n",
+                    farray[i].fname, dlerror());
++diff --git a/common/utils/threadPool/task_ans.h b/common/utils/threadPool/task_ans.h
++index 2fa7d0fc83..603c6cf916 100644
++--- a/common/utils/threadPool/task_ans.h
+++++ b/common/utils/threadPool/task_ans.h
++@@ -43,7 +43,7 @@ extern "C" {
++ 
++ #if defined(__i386__) || defined(__x86_64__)
++ #define LEVEL1_DCACHE_LINESIZE 64
++-#elif defined(__aarch64__)
+++#elif defined(__aarch64__) || defined(__riscv)
++ // This is not always true for ARM
++ // in linux, you can obtain the size at runtime using sysconf (_SC_LEVEL1_DCACHE_LINESIZE)
++ // or from the bash with the command $ getconf LEVEL1_DCACHE_LINESIZE
+ diff --git a/common/utils/threadPool/thread-pool.c b/common/utils/threadPool/thread-pool.c
+ index 2a31602e6e..95191d3d11 100644
+ --- a/common/utils/threadPool/thread-pool.c
+@@ -154,6 +260,42 @@ index 2a31602e6e..95191d3d11 100644
+    free(args);
+    return NULL;
+  }
++diff --git a/common/utils/time_meas.h b/common/utils/time_meas.h
++index de79a0252d..9fc2224194 100644
++--- a/common/utils/time_meas.h
+++++ b/common/utils/time_meas.h
++@@ -35,7 +35,7 @@
++ extern int cpu_meas_enabled;
++ extern double cpu_freq_GHz  __attribute__ ((aligned(32)));;
++ // structure to store data to compute cpu measurment
++-#if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || defined(__aarch64__)
+++#if defined(__x86_64__) || defined(__i386__) || defined(__arm__) || defined(__aarch64__) || defined(__riscv)
++   typedef long long oai_cputime_t;
++ #else
++   #error "building on unsupported CPU architecture"
++@@ -100,6 +100,22 @@ static inline unsigned long long rdtsc_oai(void) {
++   __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
++   return (d<<32) | a;
++ }
+++#elif defined(__riscv)
+++/*
+++ * Linux may disable user-space access to the RISC-V cycle counter.  Using
+++ * rdcycle then raises SIGILL on K3, so use the kernel-provided monotonic clock.
+++ * The returned unit is nanoseconds; get_cpu_freq_GHz() consequently evaluates
+++ * to 1.0 and the existing cycle-to-time formulas remain valid.
+++ */
+++static inline uint64_t rdtsc_oai(void) __attribute__((always_inline));
+++static inline uint64_t rdtsc_oai(void)
+++{
+++  struct timespec ts;
+++  if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) != 0)
+++    return 0;
+++  return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+++}
+++
++ #elif defined(__aarch64__)
++ static inline uint64_t rdtsc_oai(void) __attribute__((always_inline));
++ static inline uint64_t rdtsc_oai(void)
+ diff --git a/detect_host.sh b/detect_host.sh
+ new file mode 100755
+ index 0000000000..92e06a28e2
+@@ -1443,6 +1585,33 @@ index 3fece46ac8..826298acd2 100644
+    for (int pusch_id = 0; pusch_id < nrLDPC_slot_decoding_parameters->nb_TBs; pusch_id++) {
+      nrLDPC_TB_decoding_parameters_t *nrLDPC_TB_decoding_parameters = &nrLDPC_slot_decoding_parameters->TBs[pusch_id];
+      for (int r = 0; r < nrLDPC_TB_decoding_parameters->C; r++) {
++diff --git a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_encoder.c b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_encoder.c
++index 5d0e90e46b..07b977372f 100644
++--- a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_encoder.c
+++++ b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_encoder.c
++@@ -157,6 +157,22 @@ static void write_task_output(uint8_t *f,
++     output_p++;
++   }
++        
+++#elif defined(__riscv)
+++  // Portable scalar fallback. Each input byte contains one bit from up to
+++  // eight segments; write each segment contiguously into the packed output.
+++  uint32_t segment_offset = Eoffset;
+++  for (uint32_t j = 0; j < nb_segments; j++) {
+++    const bool first_group = j < E2_first_segment;
+++    const uint8_t *src = first_group ? f : f2;
+++    const uint32_t segment_bits = first_group ? E : E2;
+++    for (uint32_t i = 0; i < segment_bits; i++) {
+++      const uint8_t bit = (src[i] >> j) & 1U;
+++      const uint32_t output_bit = segment_offset + i;
+++      output[output_bit >> 3] |= bit << (output_bit & 7);
+++    }
+++    segment_offset += segment_bits;
+++  }
+++
++ #else
++   uint32_t *output_p = (uint32_t*)output;
++ 
+ diff --git a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c b/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
+ index d3b9a58da1..4e369950e7 100644
+ --- a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
+@@ -2057,6 +2226,19 @@ index 3f4660744d..bd4f56baf6 100644
+        // Calculation of a group of two terms in the bit metric involving product of psi and interference
+        psi_a_s[j] = prodsum_psi_a_epi16_256(psi_r_s[j], a_r_s[j], psi_i_s[j], a_i_s[j]);
+  
++diff --git a/openair1/PHY/TOOLS/oai_dfts.c b/openair1/PHY/TOOLS/oai_dfts.c
++index 1a86bfdc27..ed96183e99 100644
++--- a/openair1/PHY/TOOLS/oai_dfts.c
+++++ b/openair1/PHY/TOOLS/oai_dfts.c
++@@ -19,7 +19,7 @@
++  *      contact@openairinterface.org
++  */
++ 
++-#if defined(__x86_64__) || defined(__i386__)
+++#if defined(__x86_64__) || defined(__i386__) || defined(__riscv)
++ #include <stdio.h>
++ #include <stdlib.h>
++ #include <string.h>
+ diff --git a/openair1/PHY/defs_RU.h b/openair1/PHY/defs_RU.h
+ index e72465c4a9..0601d728d0 100644
+ --- a/openair1/PHY/defs_RU.h
+diff --git a/plugins/CMakeLists.txt b/plugins/CMakeLists.txt
+index 3b89926..45cb008 100644
+--- a/plugins/CMakeLists.txt
++++ b/plugins/CMakeLists.txt
+@@ -7,39 +7,46 @@
+ 
+ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+ 
+-option(ENABLE_CUDA "Enable CUDA package" ON)
++option(ENABLE_CUDA "Build NVIDIA CUDA/TensorRT plugins" OFF)
++
++# RISC-V targets in this port are CPU-only. Keep this guard here as a second
++# line of defence in case a caller accidentally passes -DENABLE_CUDA=ON.
++if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv64|riscv)$")
++  if(ENABLE_CUDA)
++    message(WARNING "CUDA was requested on RISC-V; forcing ENABLE_CUDA=OFF")
++  endif()
++  set(ENABLE_CUDA OFF CACHE BOOL "Build NVIDIA CUDA/TensorRT plugins" FORCE)
++  set(ENABLE_DGX_OPTIMIZATIONS OFF CACHE BOOL "Use DGX-specific fast paths" FORCE)
++endif()
+ 
+ if (ENABLE_CUDA)
+   find_package(CUDAToolkit REQUIRED)
+   enable_language(CUDA)
+-  # Support multiple CUDA architectures: Orin (sm_87), Thor (sm_110), DGX Spark (sm_121)
+-  # Can be overridden via -DCMAKE_CUDA_ARCHITECTURES=<arch>; plugins may set CUDA_ARCHITECTURES per target
+   if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+     set(CMAKE_CUDA_ARCHITECTURES "87;110;121")
+   endif()
+ endif()
+ 
+-# Base plugin entry points (subdirectories add to this via PARENT_SCOPE)
+ set(PLUGINS_SRC
+     common/src/plugins.c
+ )
+ 
+-# Add plugin subdirectories
+ if (ENABLE_CUDA)
+   add_subdirectory(neural_demapper)
+   add_subdirectory(neural_receiver)
+   add_subdirectory(ldpc_cuda)
+   add_subdirectory(channel_emulation)
+-endif ()
++else()
++  message(STATUS "CPU-only plugin build: CUDA LDPC, TensorRT neural plugins, and CUDA channel emulation are disabled")
++  list(APPEND PLUGINS_SRC common/src/cpu_only_stubs.c)
++endif()
+ add_subdirectory(data_acquisition)
+ add_subdirectory(link_adaptation)
+ 
+-# ASN.1 include paths needed by MAC plugin headers (link_adaptation)
+ include_directories(${CMAKE_BINARY_DIR}/openair2/RRC/NR/MESSAGES)
+ include_directories(${CMAKE_BINARY_DIR}/openair2/RRC/LTE/MESSAGES)
+ include_directories(${CMAKE_BINARY_DIR})
+ 
+-# Build plugins plugin library with all sources
+ add_library(plugins_plugins STATIC ${PLUGINS_SRC} common/src/mac_plugins.c ${MAC_PLUGINS_SRC})
+ add_dependencies(plugins_plugins generate_T asn1_nr_rrc_hdrs gen_nr_rrc_hdrs asn1_lte_rrc_hdrs gen_lte_rrc_hdrs)
+ target_link_libraries(nr-uesoftmodem PUBLIC plugins_plugins)
+diff --git a/plugins/channel_emulation/tutorial.yaml b/plugins/channel_emulation/tutorial.yaml
+index ac092ed..be470c8 100644
+--- a/plugins/channel_emulation/tutorial.yaml
++++ b/plugins/channel_emulation/tutorial.yaml
+@@ -8,13 +8,13 @@ description: CUDA channel emulator with file-based and ZMQ CIR sources
+ 
+ tests:
+   unit:
+-    enabled: true
++    enabled: false # CUDA emulator disabled for the K3 CPU baseline
+     command: |
+       pytest cuda_emulator/tests/unit -v
+       pytest file_loader/tests/unit -v
+       pytest zmq_loader/tests/unit -v
+   integration:
+-    enabled: true
++    enabled: false # CUDA emulator disabled for the K3 CPU baseline
+     command: "tests/integration/run_integration.sh"
+ 
+ build:
+diff --git a/plugins/common/build_all_plugins.sh b/plugins/common/build_all_plugins.sh
+index 3445cd2..7e254b0 100755
+--- a/plugins/common/build_all_plugins.sh
++++ b/plugins/common/build_all_plugins.sh
+@@ -36,6 +36,10 @@ done
+ # Export so it's available to build scripts
+ export BUILD_TARGET
+ 
++# K3/RV64 uses the CPU-only baseline by default.
++CPU_ONLY="${SIONNA_RK_CPU_ONLY:-1}"
++GPU_ONLY_PLUGINS=" ldpc_cuda neural_demapper neural_receiver channel_emulation "
++
+ # Get the absolute path of the script and plugins directory
+ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ PLUGINS_DIR="$(dirname "$SCRIPT_DIR")"
+@@ -54,6 +58,12 @@ find "$PLUGINS_DIR" -maxdepth 2 -name "tutorial.yaml" | while read config_file;
+ 
+     echo "Processing plugin: $plugin_name"
+ 
++    if [ "$CPU_ONLY" = "1" ] && [[ "$GPU_ONLY_PLUGINS" == *" $plugin_name "* ]]; then
++        echo "  Build skipped: GPU-only plugin is disabled in CPU-only mode"
++        echo "----------------------------------------"
++        continue
++    fi
++
+     # Parse YAML using python to get build configuration
+     # We output shell variable assignments to be evaluated
+     eval $(python3 -c "
+diff --git a/plugins/common/src/cpu_only_stubs.c b/plugins/common/src/cpu_only_stubs.c
+new file mode 100644
+index 0000000..4ce4ac2
+--- /dev/null
++++ b/plugins/common/src/cpu_only_stubs.c
+@@ -0,0 +1,25 @@
++/* CPU-only implementations for plugins that require CUDA or TensorRT. */
++#include "plugins.h"
++#include <stddef.h>
++#include <string.h>
++
++int load_receiver_lib(char *version, receiver_interface_t *interface)
++{
++  (void)version;
++  if (interface != NULL)
++    memset(interface, 0, sizeof(*interface));
++  return 0;
++}
++
++int free_receiver_lib(receiver_interface_t *interface)
++{
++  if (interface != NULL)
++    memset(interface, 0, sizeof(*interface));
++  return 0;
++}
++
++void init_channel_emulator_libs(const NR_DL_FRAME_PARMS *fp) { (void)fp; }
++void init_channel_emulator_worker_thread(void) {}
++void free_channel_emulator_libs(void) {}
++int is_channel_emulation_enabled(void) { return 0; }
++const void *channel_emulator_cir_read_and_apply(void) { return NULL; }
+diff --git a/plugins/common/src/plugins.c b/plugins/common/src/plugins.c
+index 7c01a6d..4e02087 100644
+--- a/plugins/common/src/plugins.c
++++ b/plugins/common/src/plugins.c
+@@ -30,8 +30,10 @@ void free_plugins()
+ {
+     // insert your plugin release/free here.
+ 
+-    free_demapper_lib(&demapper_interface);
+-    free_receiver_lib(&receiver_interface);
++    if (demapper_interface.shutdown)
++        free_demapper_lib(&demapper_interface);
++    if (receiver_interface.shutdown)
++        free_receiver_lib(&receiver_interface);
+     free_channel_emulator_libs();
+ }
+ 
+diff --git a/plugins/ldpc_cuda/tutorial.yaml b/plugins/ldpc_cuda/tutorial.yaml
+index 8e2f97e..39cbd0b 100644
+--- a/plugins/ldpc_cuda/tutorial.yaml
++++ b/plugins/ldpc_cuda/tutorial.yaml
+@@ -8,10 +8,10 @@ description: GPU-accelerated LDPC encoding and decoding
+ 
+ tests:
+   unit:
+-    enabled: true
++    enabled: false # GPU-only; disabled for the K3 CPU baseline
+     command: pytest tests/unit -v
+   integration:
+-    enabled: true
++    enabled: false # GPU-only; disabled for the K3 CPU baseline
+     command: ./tests/integration/run_integration.sh
+ 
+ build:
+diff --git a/plugins/neural_demapper/tutorial.yaml b/plugins/neural_demapper/tutorial.yaml
+index ce0cc4d..d217cb7 100644
+--- a/plugins/neural_demapper/tutorial.yaml
++++ b/plugins/neural_demapper/tutorial.yaml
+@@ -8,16 +8,16 @@ description: Neural network-based demapper with TensorRT acceleration
+ 
+ tests:
+   unit:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: pytest tests/unit -v
+   integration:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: ./tests/integration/run_integration.sh
+ 
+ build:
+   host:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: ./scripts/build-trt-plans.sh --plan ./models/neural_demapper.2xfloat16.host.plan
+   container:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: docker run --runtime=nvidia -v ../../plugins/:/mnt/plugins --rm -t ran-build-cuda:latest /mnt/plugins/neural_demapper/scripts/build-trt-plans.sh --plan /mnt/plugins/neural_demapper/models/neural_demapper.2xfloat16.plan
+diff --git a/plugins/neural_receiver/tutorial.yaml b/plugins/neural_receiver/tutorial.yaml
+index 74b1cbf..87eeba6 100644
+--- a/plugins/neural_receiver/tutorial.yaml
++++ b/plugins/neural_receiver/tutorial.yaml
+@@ -8,16 +8,16 @@ description: End-to-end neural receiver implementation
+ 
+ tests:
+   unit:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: pytest tests/unit -v
+   integration:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: ./tests/integration/run_integration.sh
+ 
+ build:
+   host:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: ./scripts/build-trt-plans.sh --plan ./models/nrx_oai.host.plan
+   container:
+-    enabled: true
++    enabled: false # TensorRT/CUDA disabled for the K3 CPU baseline
+     command: docker run --runtime=nvidia -v ../../plugins/:/mnt/plugins -v ../../ext/neural_rx:/mnt/neural_rx --rm -t ran-build-cuda:latest /mnt/plugins/neural_receiver/scripts/build-trt-plans.sh --onnx /mnt/neural_rx/onnx_models/nrx_oai.onnx --plan /mnt/plugins/neural_receiver/models/nrx_oai.plan
+\ No newline at end of file
+diff --git a/scripts/build-oai-images.sh b/scripts/build-oai-images.sh
+index 4a3998c..7ad7720 100755
+--- a/scripts/build-oai-images.sh
++++ b/scripts/build-oai-images.sh
+@@ -4,6 +4,12 @@
+ # SPDX-License-Identifier: Apache-2.0
+ #
+ 
++if [ "${SIONNA_RK_CPU_ONLY:-1}" = "1" ]; then
++    echo "NVIDIA CUDA image build is disabled in CPU-only mode." >&2
++    echo "Use ./scripts/build-oai-native.sh instead." >&2
++    exit 2
++fi
++
+ # functions
+ function usage() {
+     echo "Usage: $0 [-h|--help] [--debug] [--tag <tagname>] [--no-cache] [--ci] [--force-platform <platform>] <openairinterface5g_dir>"
+diff --git a/scripts/configure-system.sh b/scripts/configure-system.sh
+index 35411e0..18b23e1 100755
+--- a/scripts/configure-system.sh
++++ b/scripts/configure-system.sh
+@@ -7,7 +7,7 @@
+ # functions
+ function usage() {
+     echo "Usage: $0 [-h|--help] [--force-platform <platform>] [--verbose] [--dry-run]"
+-    echo "Platforms: agx-orin, agx-thor, orin-nano, dgx-spark"
++    echo "Platforms: k3, agx-orin, agx-thor, orin-nano, dgx-spark"
+     exit 1
+ }
+ 
+@@ -62,6 +62,12 @@ echo "Platform: $platform"
+ echo "Model: $model"
+ echo "Family: $family"
+ 
++if [ "$platform" == "k3" ] || ([ "$(uname -m)" == "riscv64" ] && [ "$platform" == "unknown" ]); then
++    echo "Configuring system as 'K3 Pico-ITX' in CPU-only mode"
++    execute "${source_dir}/scripts/configure-system.k3.sh"
++    exit 0
++fi
++
+ # select the script according to platform
+ if [ "$platform" == "agx-orin" ] || ([ "$model" == "NVIDIA Jetson AGX Orin Developer Kit" ] && [ "$platform" == "unknown" ]); then
+     echo "Configuring system as 'Jetson AGX Orin Developer Kit'"
+diff --git a/scripts/detect_host.sh b/scripts/detect_host.sh
+index 73aa254..a0f5a6c 100755
+--- a/scripts/detect_host.sh
++++ b/scripts/detect_host.sh
+@@ -7,6 +7,12 @@
+ # default values
+ family="Unknown"
+ model="Unknown"
++arch=$(uname -m)
++
++if [ "$arch" == "riscv64" ]; then
++    echo "K3 Pico-ITX"
++    exit 0
++fi
+ 
+ if [ -f "/sys/devices/virtual/dmi/id/product_family" ]; then
+     family=$(cat /sys/devices/virtual/dmi/id/product_family)
+diff --git a/scripts/quickstart-oai.sh b/scripts/quickstart-oai.sh
+index 7874ab4..1358a7e 100755
+--- a/scripts/quickstart-oai.sh
++++ b/scripts/quickstart-oai.sh
+@@ -10,7 +10,7 @@ check-license
+ 
+ # functions
+ function usage() {
+-    echo "Usage: $0 [-h|--help] [--clean] [--debug] [--no-build] [--tag <tagname>] [--ci] [--oai-version <oai-version>] --source <kit-rootdir> --dest <openairinterface5g_dir>"
++    echo "Usage: $0 [-h|--help] [--clean] [--debug] [--no-build] [--install-deps] [--enable-gpu] [--tag <tagname>] [--ci] [--oai-version <oai-version>] --source <kit-rootdir> --dest <openairinterface5g_dir>"
+     exit 1
+ }
+ 
+@@ -36,6 +36,8 @@ no_build=0
+ no_tutorials=0
+ debug=0
+ ci=0
++install_deps=0
++cpu_only=${SIONNA_RK_CPU_ONLY:-1}
+ 
+ # Parse command-line arguments
+ while [[ $# -gt 0 ]]; do
+@@ -47,6 +49,8 @@ while [[ $# -gt 0 ]]; do
+         --oai-version) OAI_VERSION="$2"; shift ;;
+         --clean) clean_dest=1 ;;
+         --no-build) no_build=1 ;;
++        --install-deps) install_deps=1 ;;
++        --enable-gpu) cpu_only=0 ;;
+         --debug) debug=1 ;;
+         --ci) ci=1 ;;
+         *) usage; exit 1 ;;
+@@ -65,7 +69,8 @@ dest_dir=$(realpath -sm "$dest_dir")
+ 
+ echo "source: $source_dir"
+ echo "dest: $dest_dir"
+-echo "arch: $arch"
++echo "arch: $(uname -m)"
++echo "CPU-only: $cpu_only"
+ 
+ # If clean install, remove destination directory
+ if [ "$clean_dest" = "1" ] && [ -d "$dest_dir" ]; then
+@@ -106,14 +111,27 @@ pushd "$dest_dir"
+ git submodule update --init --recursive
+ popd
+ 
++if [ "$cpu_only" = "1" ] && [ ! -e "${dest_dir}/plugins" ]; then
++    ln -s "${source_dir}/plugins" "${dest_dir}/plugins"
++fi
++
+ if [ "$no_build" = "0" ]; then
+-    echo "Build OAI images..."
+-    extra_opts=""
+-    if [ "$debug" = "1" ]; then
+-        extra_opts="$extra_opts --debug"
+-    fi
+-    if [ "$ci" = "1" ]; then
+-        extra_opts="$extra_opts --ci"
++    if [ "$cpu_only" = "1" ]; then
++        echo "Build OAI natively in CPU-only mode..."
++        native_opts=""
++        if [ "$install_deps" = "1" ]; then
++            native_opts="--install-deps"
++        fi
++        SIONNA_RK_CPU_ONLY=1 "${source_dir}/scripts/build-oai-native.sh" $native_opts "$dest_dir"
++    else
++        echo "Build NVIDIA CUDA images..."
++        extra_opts=""
++        if [ "$debug" = "1" ]; then
++            extra_opts="$extra_opts --debug"
++        fi
++        if [ "$ci" = "1" ]; then
++            extra_opts="$extra_opts --ci"
++        fi
++        SIONNA_RK_CPU_ONLY=0 "${source_dir}/scripts/build-oai-images.sh" $extra_opts --tag "$TAG" "$dest_dir"
+     fi
+-    "${source_dir}/scripts/build-oai-images.sh" $extra_opts --tag "$TAG" "$dest_dir"
+ fi
+diff --git a/scripts/start_channel_emulation_demo.sh b/scripts/start_channel_emulation_demo.sh
+index 26e3aa4..e6b2909 100755
+--- a/scripts/start_channel_emulation_demo.sh
++++ b/scripts/start_channel_emulation_demo.sh
+@@ -1,4 +1,10 @@
+ #!/bin/bash
++
++if [ "${SIONNA_RK_CPU_ONLY:-1}" = "1" ]; then
++    echo "CUDA channel emulation demo is disabled in CPU-only mode." >&2
++    exit 2
++fi
++
+ #
+ # SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ # SPDX-License-Identifier: Apache-2.0
+diff --git a/scripts/start_mps.sh b/scripts/start_mps.sh
+index 4456d06..4d7a724 100755
+--- a/scripts/start_mps.sh
++++ b/scripts/start_mps.sh
+@@ -1,5 +1,11 @@
+ #!/bin/bash
+ 
++if [ "${SIONNA_RK_CPU_ONLY:-1}" = "1" ]; then
++    echo "NVIDIA MPS is disabled in CPU-only mode."
++    exit 0
++fi
++
++
+ export CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps
+ export CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+ 
+diff --git a/scripts/stop_mps.sh b/scripts/stop_mps.sh
+index dae2608..c48573e 100755
+--- a/scripts/stop_mps.sh
++++ b/scripts/stop_mps.sh
+@@ -1,4 +1,10 @@
+ #!/bin/bash
+ 
++if [ "${SIONNA_RK_CPU_ONLY:-1}" = "1" ]; then
++    echo "NVIDIA MPS is disabled in CPU-only mode."
++    exit 0
++fi
++
++
+ echo "Stopping MPS Server"
+ echo "quit" | nvidia-cuda-mps-control
+diff --git a/requirements_cpu.txt b/requirements_cpu.txt
+new file mode 100644
+index 0000000..27e34b5
+--- /dev/null
++++ b/requirements_cpu.txt
+@@ -0,0 +1,10 @@
++# Python dependencies for the K3/RV64 CPU-only baseline.
++# NVIDIA TensorRT and nvidia-modelopt are intentionally excluded.
++numpy
++matplotlib
++nanobind
++onnx
++onnxscript
++pytest
++pyzmq
++pyyaml
+diff --git a/scripts/build-oai-native.sh b/scripts/build-oai-native.sh
+new file mode 100755
+index 0000000..a819814
+--- /dev/null
++++ b/scripts/build-oai-native.sh
+@@ -0,0 +1,68 @@
++#!/bin/bash
++# Build the patched OpenAirInterface gNB and nrUE natively without NVIDIA GPU dependencies.
++
++set -euo pipefail
++
++usage() {
++    echo "Usage: $0 [--install-deps] [openairinterface5g_dir]"
++}
++
++install_deps=0
++oai_dir=""
++
++while [[ $# -gt 0 ]]; do
++    case "$1" in
++        --install-deps)
++            install_deps=1
++            shift
++            ;;
++        -h|--help)
++            usage
++            exit 0
++            ;;
++        *)
++            if [ -n "$oai_dir" ]; then
++                usage >&2
++                exit 1
++            fi
++            oai_dir="$1"
++            shift
++            ;;
++    esac
++done
++
++project_root=$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")
++oai_dir=$(realpath -sm "${oai_dir:-${project_root}/ext/openairinterface5g}")
++
++if [ ! -x "${oai_dir}/cmake_targets/build_oai" ]; then
++    echo "Error: OpenAirInterface source is missing at ${oai_dir}." >&2
++    echo "Run ./scripts/quickstart-oai.sh --no-build first." >&2
++    exit 1
++fi
++
++if [ ! -e "${oai_dir}/plugins" ]; then
++    ln -s "${project_root}/plugins" "${oai_dir}/plugins"
++fi
++
++export SIONNA_RK_CPU_ONLY=1
++export CUDA_VISIBLE_DEVICES=""
++export NVIDIA_VISIBLE_DEVICES=void
++
++build_args=(
++    -w SIMU
++    --gNB
++    --nrUE
++    --cmake-opt -DENABLE_PLUGINS=ON
++    --cmake-opt -DENABLE_CUDA=OFF
++    --cmake-opt -DENABLE_DGX_OPTIMIZATIONS=OFF
++    --cmake-opt -DAVX2=OFF
++    --cmake-opt -DAVX512=OFF
++)
++
++if [ "$install_deps" = "1" ]; then
++    build_args=(-I "${build_args[@]}")
++fi
++
++echo "Building OpenAirInterface natively in CPU-only mode"
++echo "OAI source: ${oai_dir}"
++"${oai_dir}/cmake_targets/build_oai" "${build_args[@]}"
+diff --git a/scripts/configure-system.k3.sh b/scripts/configure-system.k3.sh
+new file mode 100755
+index 0000000..862d9f5
+--- /dev/null
++++ b/scripts/configure-system.k3.sh
+@@ -0,0 +1,29 @@
++#!/bin/bash
++# Configure the SpacemiT K3 Pico-ITX for the Sionna-RK CPU-only port.
++
++set -euo pipefail
++
++if [ "$(uname -m)" != "riscv64" ]; then
++    echo "Error: this configuration is intended for a riscv64 host." >&2
++    exit 1
++fi
++
++export SIONNA_RK_CPU_ONLY=1
++export CUDA_VISIBLE_DEVICES=""
++export NVIDIA_VISIBLE_DEVICES=void
++
++sudo apt-get update
++sudo apt-get install -y \
++    build-essential \
++    cmake \
++    git \
++    ninja-build \
++    pkg-config \
++    python3 \
++    python3-pip \
++    python3-venv \
++    libcjson-dev \
++    libzmq3-dev
++
++echo "K3 CPU-only prerequisites installed."
++echo "CUDA, TensorRT, NVIDIA Container Runtime, and L4T packages were not installed."
+diff --git a/scripts/k3-rfsim-message-test.sh b/scripts/k3-rfsim-message-test.sh
+new file mode 100755
+index 0000000..e2f0761
+--- /dev/null
++++ b/scripts/k3-rfsim-message-test.sh
+@@ -0,0 +1,65 @@
++#!/usr/bin/env bash
++set -euo pipefail
++GNB_UNIT=k3-rfsim-gnb.service
++UE_UNIT=k3-rfsim-nrue.service
++for unit in "$GNB_UNIT" "$UE_UNIT"; do
++  systemctl is-active --quiet "$unit" || { echo "ERROR: $unit is not active." >&2; exit 1; }
++done
++for dev in oaitun_enb1 oaitun_ue1; do
++  ip link show "$dev" >/dev/null 2>&1 || { echo "ERROR: interface $dev is missing." >&2; exit 1; }
++done
++old_all_rpf=$(sysctl -n net.ipv4.conf.all.rp_filter)
++old_enb_rpf=$(sysctl -n net.ipv4.conf.oaitun_enb1.rp_filter)
++old_ue_rpf=$(sysctl -n net.ipv4.conf.oaitun_ue1.rp_filter)
++old_all_local=$(sysctl -n net.ipv4.conf.all.accept_local)
++old_enb_local=$(sysctl -n net.ipv4.conf.oaitun_enb1.accept_local)
++old_ue_local=$(sysctl -n net.ipv4.conf.oaitun_ue1.accept_local)
++restore() {
++  sudo sysctl -q -w net.ipv4.conf.all.rp_filter="$old_all_rpf"     net.ipv4.conf.oaitun_enb1.rp_filter="$old_enb_rpf"     net.ipv4.conf.oaitun_ue1.rp_filter="$old_ue_rpf"     net.ipv4.conf.all.accept_local="$old_all_local"     net.ipv4.conf.oaitun_enb1.accept_local="$old_enb_local"     net.ipv4.conf.oaitun_ue1.accept_local="$old_ue_local" >/dev/null 2>&1 || true
++}
++trap restore EXIT INT TERM
++sudo sysctl -q -w net.ipv4.conf.all.rp_filter=0   net.ipv4.conf.oaitun_enb1.rp_filter=0   net.ipv4.conf.oaitun_ue1.rp_filter=0   net.ipv4.conf.all.accept_local=1   net.ipv4.conf.oaitun_enb1.accept_local=1   net.ipv4.conf.oaitun_ue1.accept_local=1
++python3 - <<'PY'
++import queue
++import socket
++import threading
++import time
++
++SO_BINDTODEVICE = socket.SO_BINDTODEVICE
++
++def exchange(label, recv_ip, recv_port, send_ip, send_port, send_dev, payload):
++    result = queue.Queue()
++    ready = threading.Event()
++    def receiver():
++        try:
++            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
++                s.settimeout(10)
++                s.bind((recv_ip, recv_port))
++                ready.set()
++                data, peer = s.recvfrom(2048)
++                result.put((data, peer, None))
++        except Exception as exc:
++            result.put((None, None, exc))
++    thread = threading.Thread(target=receiver, daemon=True)
++    thread.start()
++    if not ready.wait(2):
++        raise RuntimeError(f"{label}: receiver did not start")
++    time.sleep(0.3)
++    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
++        s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, send_dev.encode() + b"\0")
++        s.bind((send_ip, send_port))
++        sent = s.sendto(payload, (recv_ip, recv_port))
++    thread.join(11)
++    if thread.is_alive():
++        raise RuntimeError(f"{label}: receive timeout")
++    data, peer, error = result.get_nowait()
++    if error:
++        raise error
++    if data != payload:
++        raise RuntimeError(f"{label}: expected {payload!r}, received {data!r}")
++    print(f"{label}: sent {sent} bytes; received {data.decode()} from {peer[0]}:{peer[1]}")
++
++exchange("UE -> gNB", "10.0.1.1", 5001, "10.0.1.2", 5002, "oaitun_ue1", b"hello")
++exchange("gNB -> UE", "10.0.1.2", 5002, "10.0.1.1", 5001, "oaitun_enb1", b"world")
++print("PASS: bidirectional application messages crossed the OAI RFsim data bearer.")
++PY
+diff --git a/scripts/run-k3-rfsim.sh b/scripts/run-k3-rfsim.sh
+new file mode 100755
+index 0000000..db5705d
+--- /dev/null
++++ b/scripts/run-k3-rfsim.sh
+@@ -0,0 +1,77 @@
++#!/usr/bin/env bash
++set -euo pipefail
++ROOT="${SIONNA_RK_ROOT:-$HOME/sionna-rk}"
++BUILD="$ROOT/ext/openairinterface5g/cmake_targets/ran_build/build"
++GNB_CONF="$ROOT/ext/openairinterface5g/ci-scripts/conf_files/gnb.sa.band78.106prb.rfsim.conf"
++UE_CONF="$ROOT/ext/openairinterface5g/targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf"
++GNB_UNIT=k3-rfsim-gnb.service
++UE_UNIT=k3-rfsim-nrue.service
++PORT=4043
++die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
++active() { sudo systemctl is-active --quiet "$1"; }
++show_processes() { ps -eo pid,ppid,pgid,sid,stat,comm,args | awk 'NR==1 || /nr-softmodem|nr-uesoftmodem|[g]db .*softmodem|[s]trace .*softmodem/'; }
++preflight_common() {
++  [ "$(uname -m)" = "riscv64" ] || die "This launcher is for RV64 K3; detected $(uname -m)."
++  [ -x "$BUILD/nr-softmodem" ] || die "Missing $BUILD/nr-softmodem; build OAI first."
++  [ -x "$BUILD/nr-uesoftmodem" ] || die "Missing $BUILD/nr-uesoftmodem; build OAI first."
++  [ -r "$GNB_CONF" ] || die "Missing gNB config: $GNB_CONF"
++  [ -r "$UE_CONF" ] || die "Missing UE config: $UE_CONF"
++}
++start_gnb() {
++  preflight_common
++  active "$GNB_UNIT" && die "$GNB_UNIT is already active."
++  pgrep -x nr-softmodem >/dev/null && { show_processes; die "An unmanaged gNB exists. Stop its original terminal process first."; }
++  pgrep -x nr-uesoftmodem >/dev/null && { show_processes; die "An unmanaged nrUE exists. Stop it first."; }
++  ss -ltn "sport = :$PORT" 2>/dev/null | grep -q LISTEN && die "TCP $PORT is occupied."
++  sudo systemctl reset-failed "$GNB_UNIT" 2>/dev/null || true
++  sudo systemd-run --unit="$GNB_UNIT" --service-type=exec --property=Restart=no --property=KillMode=mixed --working-directory="$BUILD" "$BUILD/nr-softmodem" -O "$GNB_CONF" --rfsim --rfsimulator.serveraddr server --phy-test --noS1 --gNBs.[0].min_rxtxtime 6 --T_stdout 1
++  sleep 2
++  active "$GNB_UNIT" || { sudo journalctl -u "$GNB_UNIT" -n 100 --no-pager; die "gNB unit failed."; }
++  echo "gNB is managed by systemd and survives terminal closure."
++  echo "View logs: $0 gnb-log"
++}
++start_ue() {
++  preflight_common
++  active "$UE_UNIT" && die "$UE_UNIT is already active."
++  active "$GNB_UNIT" || die "$GNB_UNIT is not active. Run: $0 gnb-start"
++  ss -ltn "sport = :$PORT" 2>/dev/null | grep -q LISTEN || die "gNB is not listening on TCP $PORT."
++  pgrep -x nr-uesoftmodem >/dev/null && { show_processes; die "An unmanaged nrUE exists. Stop it first."; }
++  sudo systemctl reset-failed "$UE_UNIT" 2>/dev/null || true
++  sudo systemd-run --unit="$UE_UNIT" --service-type=exec --property=Restart=no --property=KillMode=mixed --working-directory="$BUILD" "$BUILD/nr-uesoftmodem" -O "$UE_CONF" --rfsim --rfsimulator.serveraddr 127.0.0.1 --phy-test --noS1 -r 106 --numerology 1 --band 78 -C 3619200000 --ue-rxgain 140 --ue-txgain 0 --T_stdout 1
++  sleep 2
++  active "$UE_UNIT" || { sudo journalctl -u "$UE_UNIT" -n 120 --no-pager; die "nrUE unit failed."; }
++  echo "nrUE is managed by systemd and survives terminal closure."
++  echo "View logs: $0 ue-log"
++}
++case "${1:-}" in
++  check|status)
++    preflight_common
++    echo "Architecture: $(uname -m)"; free -h
++    sudo systemctl --no-pager --full status "$GNB_UNIT" "$UE_UNIT" 2>/dev/null || true
++    echo "RFsimulator TCP port $PORT:"; ss -ltnp "sport = :$PORT" 2>/dev/null || true
++    echo "Relevant processes:"; show_processes
++    ;;
++  gnb-start|gnb) start_gnb ;;
++  ue-start|ue) start_ue ;;
++  gnb-log) exec sudo journalctl -fu "$GNB_UNIT" -n 80 ;;
++  ue-log) exec sudo journalctl -fu "$UE_UNIT" -n 120 ;;
++  message-test) exec "$ROOT/scripts/k3-rfsim-message-test.sh" ;;
++  ue-stop)
++    sudo systemctl stop "$UE_UNIT"
++    echo "nrUE stopped."
++    ;;
++  gnb-stop)
++    active "$UE_UNIT" && die "Stop nrUE first: $0 ue-stop"
++    sudo systemctl stop "$GNB_UNIT"
++    echo "gNB stopped."
++    ;;
++  stop)
++    sudo systemctl stop "$UE_UNIT" 2>/dev/null || true
++    sudo systemctl stop "$GNB_UNIT" 2>/dev/null || true
++    echo "K3 RFsimulator units stopped."
++    ;;
++  *)
++    echo "Usage: $0 check|gnb-start|gnb-log|ue-start|ue-log|message-test|ue-stop|gnb-stop|stop"
++    exit 2
++    ;;
++esac
