@@ -12,12 +12,14 @@ Windows ──USB── Quectel UE
 ## 0. 适用条件
 
 - K3 已完成内核、UHD、OAI、核心网和测试 SIM 的部署，拥有项目目录 `/home/ubuntu/sionna-rk`。
-- 已建立 `K3-A-20260922` 本地版本快照，`scripts/k3-fixed-baseline.py --check` 可以通过。
+- 已有完整性快照。当前部署使用 `scripts/k3-deployment-guard.py --check`；只有旧部署尚无该脚本时，才使用 `scripts/k3-fixed-baseline.py --check`。任一检查失败都应先核对，不自动创建或覆盖快照。
 - B210 及 UE 接线、电源正常；只在实验室许可的屏蔽/衰减或合规射频环境下发射。馈线直连必须使用经确认的衰减方案，不能直接连接两个射频口。
 - Windows 已安装 UE 驱动，并配置匹配核心网的 APN/DNN（当前为 `oai`）；测试 SIM 与核心网订阅匹配。不要把 SIM 密钥写进教程。
 - SSH、Bash、Python 3、systemd、usbutils，以及 Windows PowerShell 可用。
 
 **新机器请先完成部署。** 此教程不会安装依赖、导入数据库、创建基线、编译 OAI 或从不存在的 GitHub 地址拉取项目。脚本中的 `ProjectRoot` 是已部署项目路径，不是本教程目录。
+
+2026-10-29 的现场版本与运行状态见 [当前项目状态](../../docs/K3_CURRENT_STATUS.md)。包装脚本优先使用当前部署 guard，避免把仍完整保存但已与现场不同的旧冻结快照误当成当前启动条件。默认工程路径可通过 `SIONNA_RK_ROOT` 指定；不会在当前 guard 失败后回退旧 guard。
 
 ## 1. 获取并放置教程文件
 

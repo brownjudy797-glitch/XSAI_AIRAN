@@ -8,6 +8,10 @@ LOG="$ROOT/logs/cn5g-k3"
 CN="$ROOT/ext/oai-cn5g-fed"
 BASE_LIB="$CN/runtime/riscv64/lib:/usr/local/lib"
 ALL_LIB="/opt/oai-boost-1.83/usr/lib/riscv64-linux-gnu:$BASE_LIB"
+AMF_BIN="${XSAI_AMF_BINARY:-$ROOT/.runtime/cn5g-selected/amf}"
+if [[ ! -x "$AMF_BIN" ]]; then
+  AMF_BIN="$CN/component/oai-amf/build/amf/build/amf"
+fi
 
 mkdir -p "$RUN" "$LOG"
 
@@ -57,7 +61,7 @@ echo $! > "$RUN/smf.pid"
 sleep 2
 
 sudo -n nohup env LD_LIBRARY_PATH="$ALL_LIB" \
-  "$CN/component/oai-amf/build/amf/build/amf" -c "$CFG/amf.yaml" -o \
+  "$AMF_BIN" -c "$CFG/amf.yaml" -o \
   >"$LOG/amf.log" 2>&1 </dev/null &
 echo $! > "$RUN/amf.pid"
 sleep 3

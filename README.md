@@ -4,6 +4,10 @@
 
 本仓库是**源码、适配器、模型、脚本和可复现实验说明**，不是包含 SIM 数据、数据库、编译产物和设备配置的一键镜像。从 [统一教程入口](tutorials/README.md) 选择 K3、x86、ARM64 或核心网路线；项目背景见 [项目与环境指南](docs/K3_PROJECT_GUIDE.md)。已经部署好 K3 的读者可看 [真实 UE 接入教程](tutorials/quickstart/README.md)。
 
+## 最新现场核查
+
+2026-10-29 已连接 K3 核对版本和部署完整性；gNB/nrUE 未运行，核心网进程仍在。见 [当前项目状态](docs/K3_CURRENT_STATUS.md)、[独立 DFT 基准](benchmarks/dft/README.md) 和 [审阅过的现场差异](snapshots/k3/20261029/README.md)。这是只读核查，不是新的实机验收。
+
 ## 项目包含什么
 
 ```text

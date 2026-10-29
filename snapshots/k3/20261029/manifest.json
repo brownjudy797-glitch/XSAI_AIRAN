@@ -1,0 +1,150 @@
+{
+  "observedAtUtc": "2026-10-29T08:07:14.999880+00:00",
+  "processCountsObservedAtUtc": "2026-10-29T08:02:41.079907+00:00",
+  "timezone": "Asia/Shanghai",
+  "scope": "Read-only host audit, not connectivity, throughput or runtime acceptance.",
+  "platform": "riscv64",
+  "kernel": "6.18.3-k3-sctp+",
+  "sourceHeads": {
+    "sionna": "0abdce3ff7f5840d64b783632eb419ea6bf54ae5",
+    "oai": "c6698f7dda869e0ab92e232da08d1a91385eb044",
+    "cn5g": "6cd16eb65b3f1f92ccc330dfe6f0bacf99372682"
+  },
+  "sourceBranches": {
+    "sionna": "main",
+    "oai": "rvv_modify"
+  },
+  "processCounts": {
+    "nr-softmodem": 0,
+    "nr-uesoftmodem": 0,
+    "amf": 1,
+    "smf": 1,
+    "upf": 1,
+    "iperf3": 1
+  },
+  "amfSctp38412Listening": true,
+  "selectedGnbBuild": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922",
+  "selectedBuildArtifacts": [
+    {
+      "path": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922/nr-softmodem",
+      "bytes": 159885200,
+      "sha256": "ddb267e5fbbd030f7b28f9560e6673db2816c2ce3a1db932f4d5109581d09f7f"
+    },
+    {
+      "path": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922/nr-uesoftmodem",
+      "bytes": 60723480,
+      "sha256": "cc35d0a048adc3e384adb533dde8a2e2efb0e80644a163156ff83cf0c8f58d04"
+    },
+    {
+      "path": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922/libdfts.so",
+      "bytes": 2475016,
+      "sha256": "d6aef42421b863acab75ac9dc03ee7f38f61147cab3e9907de9c0d56fd2d0ffb"
+    },
+    {
+      "path": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922/libldpc.so",
+      "bytes": 4202344,
+      "sha256": "9e5243e655abeb5216371fca184f1079373fbcea2beaf83e30d31abf2d5c9cca"
+    },
+    {
+      "path": "ext/openairinterface5g/cmake_targets/phy-fixed-build-20260922/librfsimulator.so",
+      "bytes": 810896,
+      "sha256": "b56d4a1caf7249fc526d771545e4fdf2f5e71ba1aadf29a7e5f9e12643f4cb3a"
+    }
+  ],
+  "deploymentSnapshot": {
+    "files": 39,
+    "savedCheckPassed": true,
+    "currentCheckPassed": true
+  },
+  "frozenBaseline20260922": {
+    "entries": 4064,
+    "missing": 0,
+    "snapshotMismatches": 0,
+    "currentDifferences": 23
+  },
+  "publishedSourceFiles": [
+    {
+      "path": "scripts/start-cn5g-k3.sh",
+      "observedSha256": "94b68e6ced461f6369aaa83b6994f2b4671d36c5d2c18a16bc8b7ceafda6a9c2",
+      "publishedSha256": "94b68e6ced461f6369aaa83b6994f2b4671d36c5d2c18a16bc8b7ceafda6a9c2"
+    },
+    {
+      "path": "scripts/run-k3-b200.sh",
+      "observedSha256": "cf2363b7fa8486814415e6742ea1210191761459b89afe782b7ece01404e29dd",
+      "publishedSha256": "cf2363b7fa8486814415e6742ea1210191761459b89afe782b7ece01404e29dd"
+    },
+    {
+      "path": "scripts/k3-deployment-guard.py",
+      "observedSha256": "eb72f4eeaa02784be92313113e7a9137ea6c55decdb74e1b0e11735eb40e1cb9",
+      "publishedSha256": "250d56ac10f67a8ca78e3b66e483f22d94a4274c8f5bca964f0623ebd1739483"
+    },
+    {
+      "path": "scripts/k3-frozen-snapshot.py",
+      "observedSha256": "181606b597d6d1ea5f1f1f4e4be4248bf63763e0b74c6af973840483f61f3d7a",
+      "publishedSha256": "fb92a5dbc0945f2639a67ab160ca3c7ade0463d0c09f620fd08f3e6112b0ba78"
+    },
+    {
+      "path": "scripts/start-k3-b200-ready.sh",
+      "observedSha256": "0a651aca62950f37645e9043b777c1e2f40b537bbc8feb4f962b778f47506e63",
+      "publishedSha256": "7c4d5586ef23fc6be4b06c5e397fde68c0eef24bef1524fe1029a482d7fafafd"
+    },
+    {
+      "path": "scripts/restart-k3-b200-clean.sh",
+      "observedSha256": "ea5dfaa5504ffe59a0ea946d3e7509fbd7d68812a3b78856bc3a1905f6937149",
+      "publishedSha256": "26d89d8938f6b0d76c4bbdf9a059a6060c5c68ba14d8d0c707cfcd712cd8522f"
+    },
+    {
+      "path": "benchmarks/dft/bench_dft.c",
+      "observedSha256": "ef039dba2cc41d1f54bc7fa3cd31e51144ff29d0a8900adaaec9fe2badeb1bda",
+      "publishedSha256": "74a1e20592cb26637145461dd86463fb1208b604d8f88f6ac61df5904196fc81"
+    },
+    {
+      "path": "benchmarks/dft/run_dft.py",
+      "observedSha256": "cfa1bf55d44926b255bf8ab87efa0203897d6dfd51da7b98de22a84645878ec2",
+      "publishedSha256": "4db5dbdd273fa45bb77dc26bf38cfd83120a2b93873a5381661d4a888d34e9cd"
+    }
+  ],
+  "observedOnlySourceFiles": [
+    {
+      "path": "plugins/neural_receiver/k3_a100/src/receiver_a100_native.cpp",
+      "sha256": "3ae8b403fa8c4a748d9aa649d2d70d42425254da0fb8250c1f6a6859a9e99b72"
+    },
+    {
+      "path": "plugins/neural_receiver/k3_a100/build.sh",
+      "sha256": "c2904e6d1d7e711106a18a7c0e5c8a9e48bb8ffc443d9b1f4c42f8485d4b9e9e"
+    },
+    {
+      "path": "plugins/rvv_phy/include/oai_dfts_rvv.h",
+      "sha256": "f1488fa6f207716e58dc97649add7d5ce98c579a6659f08b47bfbed352216ac5"
+    }
+  ],
+  "optionalOaiOverlay": {
+    "path": "oai-published-to-observed.patch",
+    "changedFiles": [
+      "executables/nr-gnb.c",
+      "openair1/PHY/defs_gNB.h"
+    ],
+    "sha256": "629a19127809f109aba41056bd7a7a39b12682ae2b5dc7e711d1fbd86b2196d3"
+  },
+  "oaiVsHeadPatch": {
+    "path": "oai-vs-head.patch",
+    "base": "c6698f7dda869e0ab92e232da08d1a91385eb044",
+    "sha256": "6d48b9584fddb992b539e832bcf8e10f98a9256959d64b6241ab24cfc180f442"
+  },
+  "recentResultDirectories": [
+    "k3-51rb-real-rematch-20261027",
+    "k3-51rb-real-clean-20261027",
+    "k3-51rb-real-restored-20261027",
+    "k3-51rb-uess-l2n4-20261027",
+    "k3-51rb-real-timing-20261027",
+    "k3-51rb-rfsim-timing-20261027"
+  ],
+  "excluded": [
+    "subscriber and SIM configuration",
+    "databases",
+    "private keys and host identities",
+    "raw logs and packet captures",
+    "build outputs",
+    "private runtime and baseline snapshots"
+  ]
+}

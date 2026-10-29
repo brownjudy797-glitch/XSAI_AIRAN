@@ -175,7 +175,9 @@ write_runtime_config() {
 }
 
 start_gnb() {
-    python3 /home/ubuntu/sionna-rk/scripts/k3-fixed-baseline.py --check || return 1
+    # The 2026-09-22 whole-host baseline is preserved as history. Check the
+    # selected current deployment's project-owned binaries/configuration.
+    python3 "$ROOT/scripts/k3-deployment-guard.py" --check || return 1
     ensure_core
     ensure_ue_internet
     preflight
