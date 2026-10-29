@@ -1,0 +1,360 @@
+diff --git a/executables/nr-gnb.c b/executables/nr-gnb.c
+index 79ccb1cf3f..5df0389ad3 100644
+--- a/executables/nr-gnb.c
++++ b/executables/nr-gnb.c
+@@ -225,7 +225,17 @@ static size_t dump_L1_meas_stats(PHY_VARS_gNB *gNB, RU_t *ru, char *output, size
+   const char *begin = output;
+   const char *end = output + outputlen;
+   output += print_meas_log(&gNB->phy_proc_tx, "L1 Tx processing", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->dci_generation_stats, "DCI generation", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->phase_comp_stats, "RX phase compensation", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->rx_srs_stats, "SRS receive", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->generate_srs_stats, "SRS generation", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->dlsch_encoding_stats, "DLSCH encoding", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->dlsch_segmentation_stats,   "DLSCH segmentation",   NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->tinput,  "LDPC enc input",  NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->tparity, "LDPC enc parity", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->toutput, "LDPC enc output", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->dlsch_rate_matching_stats,  "DLSCH rate matching",  NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->dlsch_interleaving_stats,   "DLSCH interleaving",   NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->dlsch_scrambling_stats, "DLSCH scrambling", NULL, NULL, output, end-output);
+   output += print_meas_log(&gNB->dlsch_modulation_stats, "DLSCH modulation", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->dlsch_resource_mapping_stats, "DLSCH resource mapping", NULL, NULL, output,end-output);
+@@ -234,14 +244,33 @@ static size_t dump_L1_meas_stats(PHY_VARS_gNB *gNB, RU_t *ru, char *output, size
+   output += print_meas_log(&gNB->ts_deinterleave, "UL segment deinterleaving", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ts_rate_unmatch, "UL segment rate recovery", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ts_ldpc_decode, "UL segments decoding", NULL, NULL, output, end - output);
+-  output += print_meas_log(&gNB->ulsch_decoding_stats, "ULSCH decoding total", NULL, NULL, output, end - output);
++  // 【OAI-LDPC-PROF】"UL segments decoding" 的内部细分（11 项）：
++  //   输入装载 → 迭代主体(cnProc/bnProc) → 缓冲转换 → 输出 → total
++  //   ★ cnProc/bnProc 每轮迭代计一次，故 calls ÷ (UL segments decoding).calls ≈ 平均迭代轮数
++  output += print_meas_log(&gNB->ldpc_detail.llr2llrProcBuf, "UL LDPC llr2llrProcBuf", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.llr2CnProcBuf,  "UL LDPC llr2CnProcBuf",  NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.cnProc,         "UL LDPC cnProc",         NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.cnProcPc,       "UL LDPC cnProcPc",       NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.bnProcPc,       "UL LDPC bnProcPc",       NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.bnProc,         "UL LDPC bnProc",         NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.cn2bnProcBuf,   "UL LDPC cn2bnProcBuf",   NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.bn2cnProcBuf,   "UL LDPC bn2cnProcBuf",   NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.llrRes2llrOut,  "UL LDPC llrRes2llrOut",  NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.llr2bit,        "UL LDPC llr2bit",        NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ldpc_detail.total,          "UL LDPC total",          NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->ulsch_decoding_stats, "ULSCH total decoding", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_channel_estimation_stats, "PUSCH channel estimation", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->pusch_channel_estimation_antenna_processing_stats, "PUSCH channel-estimation antenna processing", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_channel_measurement_stats, "PUSCH channel measurement", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->rx_pusch_init_stats, "PUSCH initialization", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->rx_pusch_symbol_processing_stats, "PUSCH symbol processing", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_resource_extraction_stats, "PUSCH resource extraction", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_channel_compensation_stats, "PUSCH channel compensation", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ulsch_llr_stats, "PUSCH LLR computation", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_input_stats, "Neural receiver input", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_inference_stats, "Neural receiver A100 inference", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_output_stats, "Neural receiver LLR output", NULL, NULL, output, end - output);
++  output += print_meas_log(&gNB->neural_receiver_total_stats, "Neural receiver total", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->ul_indication_stats, "UL Indication", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->slot_indication_stats, "Slot Indication", NULL, NULL, output, end - output);
+   output += print_meas_log(&gNB->rx_pusch_stats, "PUSCH inner-receiver", NULL, NULL, output, end - output);
+@@ -249,11 +278,15 @@ static size_t dump_L1_meas_stats(PHY_VARS_gNB *gNB, RU_t *ru, char *output, size
+   output += print_meas_log(&gNB->rx_prach, "PRACH RX", NULL, NULL, output, end - output);
+   if (ru->feprx)
+     output += print_meas_log(&ru->ofdm_demod_stats, "feprx", NULL, NULL, output, end - output);
++    output += print_meas_log(&ru->ofdm_demod_wait_stats, "ofdm_demod wait", NULL, NULL, output, end - output);
++    output += print_meas_log(&ru->ofdm_demod_wakeup_stats, "ofdm_demod wakeup", NULL, NULL, output, end - output);
++  output += print_meas_log(&ru->feprx_task_stats, "feprx_task (3 symbols)", NULL, NULL, output, end - output);
++  output += print_meas_log(&ru->symbol_dft_stats, "symbol_dft (RX)", NULL, NULL, output, end - output);
+ 
+   bool full_slot = ru->half_slot_parallelization == 0;
+-  if (ru->feptx_prec) {
++  if (ru->feptx_ofdm || ru->feptx_prec) {
+     output += print_meas_log(&ru->precoding_stats,
+-                             full_slot ? "feptx_prec (per port)" : "feptx_prec (per port, half_slot)",
++                             full_slot ? "feptx_copy/precoding (per port)" : "feptx_copy/precoding (per port, half_slot)",
+                              NULL,
+                              NULL,
+                              output,
+@@ -269,7 +302,9 @@ static size_t dump_L1_meas_stats(PHY_VARS_gNB *gNB, RU_t *ru, char *output, size
+                              output,
+                              end - output);
+     output += print_meas_log(&ru->ofdm_total_stats,"feptx_total",NULL,NULL, output, end - output);
+-    output += print_meas_log(&ru->txdataF_copy_stats, "txdataF_copy", NULL, NULL, output, end - output);
++    output += print_meas_log(&ru->ofdm_mod_wait_stats, "ofdm_mod wait", NULL, NULL, output, end - output);
++    output += print_meas_log(&ru->ofdm_mod_wakeup_stats, "ofdm_mod wakeup", NULL, NULL, output, end - output);
++    output += print_meas_log(&ru->symbol_idft_stats, "symbol_idft (TX)", NULL, NULL, output, end - output);
+   }
+ 
+   if (ru->fh_north_asynch_in)
+@@ -304,12 +339,17 @@ void *nrL1_stats_thread(void *param) {
+   reset_meas(&gNB->ts_ldpc_decode);
+   reset_meas(&gNB->ulsch_decoding_stats);
+   reset_meas(&gNB->ulsch_channel_estimation_stats);
++  reset_meas(&gNB->pusch_channel_estimation_antenna_processing_stats);
+   reset_meas(&gNB->ulsch_channel_measurement_stats);
+   reset_meas(&gNB->rx_pusch_init_stats);
+   reset_meas(&gNB->rx_pusch_symbol_processing_stats);
+   reset_meas(&gNB->ulsch_resource_extraction_stats);
+   reset_meas(&gNB->ulsch_channel_compensation_stats);
+   reset_meas(&gNB->ulsch_llr_stats);
++  reset_meas(&gNB->neural_receiver_input_stats);
++  reset_meas(&gNB->neural_receiver_inference_stats);
++  reset_meas(&gNB->neural_receiver_output_stats);
++  reset_meas(&gNB->neural_receiver_total_stats);
+   reset_meas(&gNB->ul_indication_stats);
+   reset_meas(&gNB->slot_indication_stats);
+   reset_meas(&gNB->rx_pusch_stats);
+@@ -325,7 +365,10 @@ void *nrL1_stats_thread(void *param) {
+     dump_pusch_stats(fd,gNB);
+     dump_L1_meas_stats(gNB, ru, output, L1STATSSTRLEN);
+     fprintf(fd,"%s\n",output);
++    fprintf(fd, "PHY_STATS_END\n");
+     fflush(fd);
++    if (ftruncate(fileno(fd), ftell(fd)) != 0)
++      LOG_W(PHY, "Could not truncate PHY statistics file\n");
+     fseek(fd,0,SEEK_SET);
+   }
+   fclose(fd);
+diff --git a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.h b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.h
+index 4613c56cdd..822284e59d 100644
+--- a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.h
++++ b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.h
+@@ -24,6 +24,9 @@
+  */
+ 
+ #include "PHY/defs_gNB.h"
++// 【OAI-LDPC-PROF】本文件用到 t_nrLDPC_time_stats。与 defs_gNB.h 存在循环 include，
++// 故显式包含，保证该类型在任何包含顺序下都可见。
++#include "PHY/CODING/nrLDPC_decoder/nrLDPC_types.h"
+ 
+ #ifndef __NRLDPC_CODING_INTERFACE__H__
+ #define __NRLDPC_CODING_INTERFACE__H__
+@@ -59,6 +62,11 @@ typedef struct nrLDPC_segment_decoding_parameters_s{
+   time_stats_t ts_deinterleave;
+   time_stats_t ts_rate_unmatch;
+   time_stats_t ts_ldpc_decode;
++  /// 【OAI-LDPC-PROF】指向"LDPC 译码内部细分统计"的存储槽（cnProc/bnProc/total 等 11 项）
++  /// ★ 这里用「指针」而不是内嵌结构体：本结构体 gNB/UE 共用，UE 侧是栈上变长数组
++  ///   （segments[nb_dlsch][max_num_segments]），内嵌 528 字节会撑大该数组并踩坏相邻
++  ///   的调度参数（实测导致 UE 断言崩溃）。用指针只增 8 字节；为 NULL 时表示不采集。
++  t_nrLDPC_time_stats *ldpc_detail;
+ } nrLDPC_segment_decoding_parameters_t;
+ 
+ /**
+diff --git a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_decoder.c b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_decoder.c
+index 43d988c29c..6ced848de3 100644
+--- a/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_decoder.c
++++ b/openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_decoder.c
+@@ -119,6 +119,8 @@ typedef struct nrLDPC_decoding_parameters_s {
+   time_stats_t *p_ts_deinterleave;
+   time_stats_t *p_ts_rate_unmatch;
+   time_stats_t *p_ts_ldpc_decode;
++  /// 【OAI-LDPC-PROF】指向本 segment 的细分统计存储槽（由 prepare 阶段接线；可为 NULL）
++  t_nrLDPC_time_stats *p_ldpc_detail;
+ } nrLDPC_decoding_parameters_t;
+ 
+ static void nr_process_decode_segment(void *arg)
+@@ -135,8 +137,11 @@ static void nr_process_decode_segment(void *arg)
+   short *ulsch_llr = rdata->llr;
+   int8_t llrProcBuf[OAI_LDPC_DECODER_MAX_NUM_LLR] __attribute__((aligned(32)));
+ 
+-  t_nrLDPC_time_stats procTime = {0};
+-  t_nrLDPC_time_stats *p_procTime = &procTime;
++  // 【OAI-LDPC-PROF】原本用局部变量收集细分计时，函数返回即丢弃，数据永远看不到。
++  // 现改为写入「所属 segment 的存储槽」——每 segment 只被一个线程写，无竞态。
++  // 若未接线（p_ldpc_detail == NULL，例如 UE 侧），退回局部变量：不影响功能，只是不采集。
++  t_nrLDPC_time_stats procTime_fallback = {0};
++  t_nrLDPC_time_stats *p_procTime = rdata->p_ldpc_detail ? rdata->p_ldpc_detail : &procTime_fallback;
+ 
+   ////////////////////////////////////////////////////////////////////////////////////////////
+   ///////////////////////////////// nr_deinterleaving_ldpc ///////////////////////////////////
+@@ -273,6 +278,9 @@ int nrLDPC_prepare_TB_decoding(nrLDPC_slot_decoding_parameters_t *nrLDPC_slot_de
+     rdata->p_ts_deinterleave = &nrLDPC_TB_decoding_parameters->segments[r].ts_deinterleave;
+     rdata->p_ts_rate_unmatch = &nrLDPC_TB_decoding_parameters->segments[r].ts_rate_unmatch;
+     rdata->p_ts_ldpc_decode = &nrLDPC_TB_decoding_parameters->segments[r].ts_ldpc_decode;
++    // 【OAI-LDPC-PROF】接线：这里取的是「指针值」——存储由调用者（gNB）分配；
++    // 为 NULL 时该 segment 不采集细分数据（UE 侧即走此路径，零开销）
++    rdata->p_ldpc_detail = nrLDPC_TB_decoding_parameters->segments[r].ldpc_detail;
+ 
+     task_t t = {.func = &nr_process_decode_segment, .args = rdata};
+     pushTpool(nrLDPC_slot_decoding_parameters->threadPool, t);
+diff --git a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c b/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
+index b714a46d00..3f5f7c1b3a 100644
+--- a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
++++ b/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
+@@ -133,8 +133,8 @@
+ #include "bnProc128/nrLDPC_bnProc_BG2_R23_128.h"
+ #endif
+ 
+-//#define NR_LDPC_PROFILER_DETAIL(a) a
+-#define NR_LDPC_PROFILER_DETAIL(a)
++#define NR_LDPC_PROFILER_DETAIL(a) a
++//#define NR_LDPC_PROFILER_DETAIL(a)   // 【OAI-LDPC-PROF】原为「空定义」，会禁用全部 32 处细分计时点
+ 
+ #include "openair1/PHY/CODING/nrLDPC_extern.h"
+ 
+diff --git a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h b/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h
+index abe5d38a50..b9b66e11b1 100644
+--- a/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h
++++ b/openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h
+@@ -109,6 +109,26 @@ typedef struct nrLDPC_time_stats {
+     time_stats_t llr2bit; /**< Statistics for function llr2bit */
+     time_stats_t total; /**< Statistics for total processing time */
+ } t_nrLDPC_time_stats;
++
++/**
++   【OAI-LDPC-PROF】把一组 LDPC 细分统计合并到另一组。
++   语义与 merge_meas() 一致：trials / diff / diff_square 累加，max 取较大者。
++   用途：逐码块的统计 → gNB 级汇总。
++ */
++static inline void merge_ldpc_detail_stats(t_nrLDPC_time_stats *dst, const t_nrLDPC_time_stats *src)
++{
++    merge_meas(&dst->llr2llrProcBuf, &src->llr2llrProcBuf);
++    merge_meas(&dst->llr2CnProcBuf,  &src->llr2CnProcBuf);
++    merge_meas(&dst->cnProc,         &src->cnProc);
++    merge_meas(&dst->cnProcPc,       &src->cnProcPc);
++    merge_meas(&dst->bnProcPc,       &src->bnProcPc);
++    merge_meas(&dst->bnProc,         &src->bnProc);
++    merge_meas(&dst->cn2bnProcBuf,   &src->cn2bnProcBuf);
++    merge_meas(&dst->bn2cnProcBuf,   &src->bn2cnProcBuf);
++    merge_meas(&dst->llrRes2llrOut,  &src->llrRes2llrOut);
++    merge_meas(&dst->llr2bit,        &src->llr2bit);
++    merge_meas(&dst->total,          &src->total);
++}
+ #endif
+ /**
+    Structure containing the processing buffers
+diff --git a/openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c b/openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c
+index 180ab3e5c5..d03cf2e615 100644
+--- a/openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c
++++ b/openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c
+@@ -238,6 +238,14 @@ int nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
+   nrLDPC_segment_decoding_parameters_t segments[nb_pusch][max_num_segments];
+   memset(segments, 0, sizeof(segments));
+ 
++  // 【OAI-LDPC-PROF】LDPC 译码细分统计的存储槽。
++  // ★ 用 static（不在栈上）：上面 segments[] 是栈上变长数组，若把 528 字节的统计内嵌进去
++  //   会大幅撑大 VLA —— UE 侧正是因此崩溃。这里改为「结构体里只放指针 + 存储单独放」。
++  // ★ 用 static 是安全的：本函数由 L1 RX 线程串行调用（每个 slot 一次），无并发写。
++  #define OAI_LDPC_DETAIL_MAX_PUSCH 8
++  #define OAI_LDPC_DETAIL_MAX_SEG   32
++  static t_nrLDPC_time_stats ldpc_detail_store[OAI_LDPC_DETAIL_MAX_PUSCH][OAI_LDPC_DETAIL_MAX_SEG];
++
+   for (uint8_t pusch_id = 0; pusch_id < nb_pusch; pusch_id++) {
+     uint8_t ULSCH_id = ULSCH_ids[pusch_id];
+     NR_gNB_ULSCH_t *ulsch = &phy_vars_gNB->ulsch[ULSCH_id];
+@@ -271,6 +279,13 @@ int nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
+       reset_meas(&segment_parameters->ts_deinterleave);
+       reset_meas(&segment_parameters->ts_rate_unmatch);
+       reset_meas(&segment_parameters->ts_ldpc_decode);
++      // 【OAI-LDPC-PROF】分配并清零本码块的细分统计槽；越界则不采集（不影响功能）
++      if (pusch_id < OAI_LDPC_DETAIL_MAX_PUSCH && r < OAI_LDPC_DETAIL_MAX_SEG) {
++        segment_parameters->ldpc_detail = &ldpc_detail_store[pusch_id][r];
++        memset(segment_parameters->ldpc_detail, 0, sizeof(t_nrLDPC_time_stats));
++      } else {
++        segment_parameters->ldpc_detail = NULL;
++      }
+ 
+       r_offset += segment_parameters->E;
+     }
+@@ -312,6 +327,9 @@ int nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
+       merge_meas(&phy_vars_gNB->ts_deinterleave, &nrLDPC_segment_decoding_parameters.ts_deinterleave);
+       merge_meas(&phy_vars_gNB->ts_rate_unmatch, &nrLDPC_segment_decoding_parameters.ts_rate_unmatch);
+       merge_meas(&phy_vars_gNB->ts_ldpc_decode, &nrLDPC_segment_decoding_parameters.ts_ldpc_decode);
++      // 【OAI-LDPC-PROF】把本码块的 11 项细分统计合并到 gNB 级汇总
++      if (nrLDPC_segment_decoding_parameters.ldpc_detail)
++        merge_ldpc_detail_stats(&phy_vars_gNB->ldpc_detail, nrLDPC_segment_decoding_parameters.ldpc_detail);
+       ulsch->last_ldpc_iterations_sum += nrLDPC_segment_decoding_parameters.decodeIterations;
+       ulsch->last_ldpc_time_us += get_time_meas_us(&nrLDPC_segment_decoding_parameters.ts_ldpc_decode);
+     }
+diff --git a/openair1/PHY/defs_RU.h b/openair1/PHY/defs_RU.h
+index 0601d728d0..ba754a2411 100644
+--- a/openair1/PHY/defs_RU.h
++++ b/openair1/PHY/defs_RU.h
+@@ -577,6 +577,12 @@ typedef struct RU_t_s {
+   time_stats_t precoding_stats;
+   /// Timing statistics
+   time_stats_t ofdm_demod_stats;
++  /// Timing statistics (RX FEP task, 3 symbols, diagnostic)
++  time_stats_t feprx_task_stats;
++  /// Timing statistics (single-symbol DFT, diagnostic)
++  time_stats_t symbol_dft_stats;
++  /// Timing statistics (single-symbol IDFT, diagnostic)
++  time_stats_t symbol_idft_stats;
+   /// Timing statistics (TX)
+   time_stats_t ofdm_mod_stats;
+   /// Timing statistics (TX)
+diff --git a/openair1/PHY/defs_gNB.h b/openair1/PHY/defs_gNB.h
+index 8173a65783..1d5fbb001c 100644
+--- a/openair1/PHY/defs_gNB.h
++++ b/openair1/PHY/defs_gNB.h
+@@ -528,6 +528,9 @@ typedef struct PHY_VARS_gNB_s {
+   time_stats_t ts_deinterleave;
+   time_stats_t ts_rate_unmatch;
+   time_stats_t ts_ldpc_decode;
++  /// 【OAI-LDPC-PROF】LDPC 译码内部细分统计的 gNB 级汇总
++  /// （cnProc / bnProc / 缓冲转换 / total 等 11 项，由 nr_ulsch_decoding.c 逐码块合并而来）
++  t_nrLDPC_time_stats ldpc_detail;
+   time_stats_t ulsch_deinterleaving_stats;
+   time_stats_t ulsch_channel_estimation_stats;
+   time_stats_t pusch_channel_estimation_antenna_processing_stats;
+@@ -535,6 +538,11 @@ typedef struct PHY_VARS_gNB_s {
+   time_stats_t ulsch_resource_extraction_stats;
+   time_stats_t ulsch_channel_compensation_stats;
+   time_stats_t ulsch_llr_stats;
++  /// Neural receiver plugin timing, using the same OAI time_stats_t clock.
++  time_stats_t neural_receiver_input_stats;
++  time_stats_t neural_receiver_inference_stats;
++  time_stats_t neural_receiver_output_stats;
++  time_stats_t neural_receiver_total_stats;
+   time_stats_t rx_srs_stats;
+   time_stats_t generate_srs_stats;
+   time_stats_t get_srs_signal_stats;
+diff --git a/openair1/SCHED_NR/nr_ru_procedures.c b/openair1/SCHED_NR/nr_ru_procedures.c
+index 0546455e36..5fc4a70cf6 100644
+--- a/openair1/SCHED_NR/nr_ru_procedures.c
++++ b/openair1/SCHED_NR/nr_ru_procedures.c
+@@ -90,12 +90,17 @@ void nr_feptx0(RU_t *ru, int tti_tx, int first_symbol, int num_symbols, int aa)
+     if (fp->numerology_index != 0) {
+       
+       if (!(slot%(fp->slots_per_subframe/2))&&(first_symbol==0)) { // case where first symbol in slot has longer prefix
++        // 只对符号 0 计时：aa==0 保证同一时刻只有一个 worker 写该 time_stats_t（避免多线程竞态）
++        if (aa == 0)
++          start_meas(&ru->symbol_idft_stats);
+         PHY_ofdm_mod(&ru->common.txdataF_BF[aa][slot_offsetF],
+                      (int*)&ru->common.txdata[aa][slot_offset],
+                      fp->ofdm_symbol_size,
+                      1,
+                      fp->nb_prefix_samples0,
+                      CYCLIC_PREFIX);
++        if (aa == 0)
++          stop_meas(&ru->symbol_idft_stats);
+ 
+         PHY_ofdm_mod(&ru->common.txdataF_BF[aa][slot_offsetF+fp->ofdm_symbol_size],
+                      (int*)&ru->common.txdata[aa][slot_offset+fp->nb_prefix_samples0+fp->ofdm_symbol_size],
+@@ -333,13 +338,26 @@ void nr_fep(void* arg)
+ 
+   int idx = aid + beam * ru->nb_rx;
+   int offset = (slot % RU_RX_SLOT_DEPTH) * fp->symbols_per_slot * fp->ofdm_symbol_size;
+-  for (int l = startSymbol; l <= endSymbol; l++) 
++  // 只对 p=0 那份任务计时（覆盖整个符号循环）：aid/beam/startSymbol 都是函数参数，
++  // 天然只有一个 worker 满足条件（与 TX 的 aa==0 && first_symbol==0 完全对称）
++  if (aid == 0 && beam == 0 && startSymbol == 0)
++    start_meas(&ru->feprx_task_stats);
++  for (int l = startSymbol; l <= endSymbol; l++) {
++      // 只对符号 0 计时：拆分后仅 p=0 那份的 startSymbol==0，
++      // 保证同一时刻只有一个 worker 写该 time_stats_t（避免多线程竞态）
++      if (l == 0)
++        start_meas(&ru->symbol_dft_stats);
+       nr_slot_fep_ul(fp,
+                      ru->common.rxdata[idx],
+                      &ru->common.rxdataF[idx][offset],
+                      l,
+                      slot,
+                      ru->N_TA_offset);
++      if (l == 0)
++        stop_meas(&ru->symbol_dft_stats);
++  }
++  if (aid == 0 && beam == 0 && startSymbol == 0)
++    stop_meas(&ru->feprx_task_stats);
+   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_PHY_PROCEDURES_RU_FEPRX+aid, 0);
+ 
+   // Task completed in //

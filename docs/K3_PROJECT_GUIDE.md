@@ -15,6 +15,8 @@
 
 [`SOURCE_SNAPSHOT.json`](../SOURCE_SNAPSHOT.json) 描述 2026-09-22 发布基线，不代表以后每一次实机二进制都与它相同。硬件/内核/UHD/CN5G 的独立部署材料在 [K3 移植工具仓库](https://github.com/brownjudy797-glitch/sionna-rk-k3-porting)；请先阅读其中的预检和回滚说明。公开仓库不包含订户密钥或数据库。
 
+2026-10-29 的现场源代码版本、所选构建、服务状态与快照检查见 [当前项目状态](K3_CURRENT_STATUS.md)；不要用旧发布 manifest 或新机教程的 OAI 版本推断现场正在运行的版本。
+
 ## 2. 获取项目并认识目录
 
 ```bash

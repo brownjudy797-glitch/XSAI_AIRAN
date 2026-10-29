@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Tutorial wrapper for the existing, path-bound K3-A-20260922 installation.
-ROOT=/home/ubuntu/sionna-rk
+# Tutorial wrapper for an existing K3 installation; never creates a baseline.
+ROOT="${SIONNA_RK_ROOT:-/home/ubuntu/sionna-rk}"
 UNIT=k3-b200-gnb.service
 usage() { echo "Usage: bash k3-quickstart.sh check|start|status|stop"; }
 check() {
@@ -10,10 +10,18 @@ check() {
     for cmd in python3 systemctl lsusb; do
         command -v "$cmd" >/dev/null || { echo "ERROR: missing $cmd" >&2; return 1; }
     done
-    [[ -r "$ROOT/scripts/k3-fixed-baseline.py" && -r "$ROOT/scripts/run-k3-b200.sh" ]] || {
-        echo 'ERROR: fixed deployment is missing; this tutorial does not install it.' >&2; return 1;
+    [[ -r "$ROOT/scripts/run-k3-b200.sh" ]] || {
+        echo 'ERROR: deployment launcher is missing; this tutorial does not install it.' >&2; return 1;
     }
-    python3 "$ROOT/scripts/k3-fixed-baseline.py" --check
+    local guard
+    if [[ -r "$ROOT/scripts/k3-deployment-guard.py" ]]; then
+        guard="$ROOT/scripts/k3-deployment-guard.py"
+    elif [[ -r "$ROOT/scripts/k3-fixed-baseline.py" ]]; then
+        guard="$ROOT/scripts/k3-fixed-baseline.py"
+    else
+        echo 'ERROR: no deployment integrity guard exists; inspect the installed baseline.' >&2; return 1
+    fi
+    python3 "$guard" --check
     local devices
     devices=$(lsusb -d 2500:0020)
     [[ -n $devices ]] || { echo 'ERROR: B210 USB device not found.' >&2; return 1; }
