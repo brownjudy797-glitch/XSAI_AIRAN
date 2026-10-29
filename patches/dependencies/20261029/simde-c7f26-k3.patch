@@ -1,0 +1,529 @@
+diff --git a/simde-math.h b/simde-math.h
+index 1dbf3bb..a40b0a9 100644
+--- a/simde-math.h
++++ b/simde-math.h
+@@ -1813,6 +1813,11 @@ int8_t
+ simde_math_adds_i8(int8_t a, int8_t b) {
+   #if defined(SIMDE_ARM_NEON_A64V8_NATIVE)
+     return vqaddb_s8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SATURATION_FASTPATH)
++    int8_t result;
++    if (__builtin_add_overflow(a, b, &result))
++      return (a < 0) ? INT8_MIN : INT8_MAX;
++    return result;
+   #else
+     uint8_t a_ = HEDLEY_STATIC_CAST(uint8_t, a);
+     uint8_t b_ = HEDLEY_STATIC_CAST(uint8_t, b);
+@@ -1832,6 +1837,11 @@ int16_t
+ simde_math_adds_i16(int16_t a, int16_t b) {
+   #if defined(SIMDE_ARM_NEON_A64V8_NATIVE)
+     return vqaddh_s16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SATURATION_FASTPATH)
++    int16_t result;
++    if (__builtin_add_overflow(a, b, &result))
++      return (a < 0) ? INT16_MIN : INT16_MAX;
++    return result;
+   #else
+     uint16_t a_ = HEDLEY_STATIC_CAST(uint16_t, a);
+     uint16_t b_ = HEDLEY_STATIC_CAST(uint16_t, b);
+@@ -1937,6 +1947,11 @@ int8_t
+ simde_math_subs_i8(int8_t a, int8_t b) {
+   #if defined(SIMDE_ARM_NEON_A64V8_NATIVE)
+     return vqsubb_s8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SATURATION_FASTPATH)
++    int8_t result;
++    if (__builtin_sub_overflow(a, b, &result))
++      return (a < 0) ? INT8_MIN : INT8_MAX;
++    return result;
+   #else
+     uint8_t a_ = HEDLEY_STATIC_CAST(uint8_t, a);
+     uint8_t b_ = HEDLEY_STATIC_CAST(uint8_t, b);
+@@ -1957,6 +1972,11 @@ int16_t
+ simde_math_subs_i16(int16_t a, int16_t b) {
+   #if defined(SIMDE_ARM_NEON_A64V8_NATIVE)
+     return vqsubh_s16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SATURATION_FASTPATH)
++    int16_t result;
++    if (__builtin_sub_overflow(a, b, &result))
++      return (a < 0) ? INT16_MIN : INT16_MAX;
++    return result;
+   #else
+     uint16_t a_ = HEDLEY_STATIC_CAST(uint16_t, a);
+     uint16_t b_ = HEDLEY_STATIC_CAST(uint16_t, b);
+diff --git a/x86/avx.h b/x86/avx.h
+index f09a52c..7ed9c7b 100644
+--- a/x86/avx.h
++++ b/x86/avx.h
+@@ -1279,6 +1279,9 @@ simde__m256
+ simde_mm256_set1_ps (simde_float32 a) {
+   #if defined(SIMDE_X86_AVX_NATIVE)
+     return _mm256_set1_ps(a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    simde__m256 r = { a, a, a, a, a, a, a, a };
++    return r;
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return (simde__m256)__lasx_xvldrepl_w(&a, 0);
+   #else
+@@ -4243,6 +4246,9 @@ simde__m256
+ simde_mm256_loadu_ps (const float a[HEDLEY_ARRAY_PARAM(8)]) {
+   #if defined(SIMDE_X86_AVX_NATIVE)
+     return _mm256_loadu_ps(a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m256 unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    return *(const unaligned_vec *) a;
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return (simde__m256)__lasx_xvld(a, 0);
+   #else
+@@ -4361,6 +4367,9 @@ simde__m256i
+ simde_mm256_loadu_si256 (void const * mem_addr) {
+   #if defined(SIMDE_X86_AVX_NATIVE)
+     return _mm256_loadu_si256(SIMDE_ALIGN_CAST(const __m256i*, mem_addr));
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m256i unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    return *(const unaligned_vec *) mem_addr;
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvld(mem_addr, 0);
+   #else
+@@ -5835,6 +5844,9 @@ void
+ simde_mm256_storeu_ps (simde_float32 mem_addr[8], simde__m256 a) {
+   #if defined(SIMDE_X86_AVX_NATIVE)
+     _mm256_storeu_ps(mem_addr, a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m256 unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    *(unaligned_vec *) mem_addr = a;
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvst(a, mem_addr, 0);
+   #else
+@@ -5872,6 +5884,9 @@ void
+ simde_mm256_storeu_si256 (void* mem_addr, simde__m256i a) {
+   #if defined(SIMDE_X86_AVX_NATIVE)
+     _mm256_storeu_si256(SIMDE_ALIGN_CAST(__m256i*, mem_addr), a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m256i unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    *(unaligned_vec *) mem_addr = a;
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvst(a, mem_addr, 0);
+   #else
+diff --git a/x86/avx2.h b/x86/avx2.h
+index 6085e58..1fdf235 100644
+--- a/x86/avx2.h
++++ b/x86/avx2.h
+@@ -41,6 +41,12 @@ simde__m256i
+ simde_mm256_abs_epi8 (simde__m256i a) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_abs_epi8(a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(32)));
++    typedef uint8_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a;
++    lanes mask = (lanes) ((signed_lanes) a < 0);
++    return (simde__m256i) ((va ^ mask) - mask);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvabsd_b(a, __lasx_xvreplgr2vr_b(0));
+   #else
+@@ -2877,6 +2883,27 @@ simde__m256i
+ simde_mm256_madd_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_madd_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE)
++    simde__m256i_private
++      r_,
++      a_ = simde__m256i_to_private(a),
++      b_ = simde__m256i_to_private(b);
++
++    /* PMADDWD multiplies adjacent signed 16-bit lanes and wraps the sum
++     * into one signed 32-bit lane.  Strided RVV loads select even/odd
++     * lanes directly and avoid widening all 16 lanes followed by gathers. */
++    const size_t vl = 8;
++    const int16_t *a16 = (const int16_t *) &a_;
++    const int16_t *b16 = (const int16_t *) &b_;
++    int32_t *r32 = (int32_t *) &r_;
++    vint16m1_t a_even = __riscv_vlse16_v_i16m1(a16, 4, vl);
++    vint16m1_t a_odd  = __riscv_vlse16_v_i16m1(a16 + 1, 4, vl);
++    vint16m1_t b_even = __riscv_vlse16_v_i16m1(b16, 4, vl);
++    vint16m1_t b_odd  = __riscv_vlse16_v_i16m1(b16 + 1, 4, vl);
++    vint32m2_t sum = __riscv_vwmul_vv_i32m2(a_even, b_even, vl);
++    sum = __riscv_vwmacc_vv_i32m2(sum, a_odd, b_odd, vl);
++    __riscv_vse32_v_i32m2(r32, sum, vl);
++    return simde__m256i_from_private(r_);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmaddwod_w_h(__lasx_xvmulwev_w_h(a, b), a, b);
+   #else
+@@ -3325,6 +3352,11 @@ simde__m256i
+ simde_mm256_max_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_max_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int16_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a, vb = (lanes) b;
++    lanes mask = va > vb;
++    return (simde__m256i) ((va & mask) | (vb & ~mask));
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmax_h(a, b);
+   #else
+@@ -3418,6 +3450,11 @@ simde__m256i
+ simde_mm256_min_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_min_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int16_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a, vb = (lanes) b;
++    lanes mask = va < vb;
++    return (simde__m256i) ((va & mask) | (vb & ~mask));
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmin_h(a, b);
+   #else
+@@ -3480,6 +3517,11 @@ simde__m256i
+ simde_mm256_min_epu8 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_min_epu8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef uint8_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a, vb = (lanes) b;
++    lanes mask = (lanes) (va < vb);
++    return (simde__m256i) ((va & mask) | (vb & ~mask));
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmin_bu(a, b);
+   #else
+@@ -3716,6 +3758,12 @@ simde_mm256_mulhi_epi16 (simde__m256i a, simde__m256i b) {
+     return _mm256_mulhi_epi16(a, b);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvmuh_h(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MUL16_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MULHI256_FASTPATH)
++    typedef int16_t simde_riscv_i16x16 __attribute__((__vector_size__(32)));
++    typedef int32_t simde_riscv_i32x16 __attribute__((__vector_size__(64)));
++    simde_riscv_i32x16 va = __builtin_convertvector((simde_riscv_i16x16) a, simde_riscv_i32x16);
++    simde_riscv_i32x16 vb = __builtin_convertvector((simde_riscv_i16x16) b, simde_riscv_i32x16);
++    return (simde__m256i) __builtin_convertvector((va * vb) >> 16, simde_riscv_i16x16);
+   #else
+     simde__m256i_private
+       r_,
+@@ -3770,6 +3818,16 @@ simde_mm256_mulhrs_epi16 (simde__m256i a, simde__m256i b) {
+     t1_ = __lasx_xvssrarni_h_w(t1_, t1_, 15);
+     t2_ = __lasx_xvssrarni_h_w(t2_, t2_, 15);
+     return __lasx_xvilvl_h(t2_, t1_);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MUL16_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MULHRS256_FASTPATH)
++    typedef int16_t simde_riscv_i16x16 __attribute__((__vector_size__(32)));
++    typedef int32_t simde_riscv_i32x16 __attribute__((__vector_size__(64)));
++    simde_riscv_i32x16 va = __builtin_convertvector((simde_riscv_i16x16) a, simde_riscv_i32x16);
++    simde_riscv_i32x16 vb = __builtin_convertvector((simde_riscv_i16x16) b, simde_riscv_i32x16);
++    const simde_riscv_i32x16 rounding = {
++      0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000,
++      0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000
++    };
++    return (simde__m256i) __builtin_convertvector(((va * vb) + rounding) >> 15, simde_riscv_i16x16);
+   #else
+     simde__m256i_private
+       r_,
+@@ -3934,6 +3992,31 @@ simde__m256i
+ simde_mm256_packs_epi32 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_packs_epi32(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE)
++    simde__m256i_private
++      r_,
++      a_ = simde__m256i_to_private(a),
++      b_ = simde__m256i_to_private(b);
++
++    /* AVX2 packs independently inside each 128-bit lane.  Keep that exact
++     * order while using RVV's signed saturating narrowing operation. */
++    const size_t vl = 4;
++    const int32_t *a32 = (const int32_t *) &a_;
++    const int32_t *b32 = (const int32_t *) &b_;
++    int16_t *r16 = (int16_t *) &r_;
++    vint32m1_t a_lo = __riscv_vle32_v_i32m1(a32, vl);
++    vint32m1_t b_lo = __riscv_vle32_v_i32m1(b32, vl);
++    vint32m1_t a_hi = __riscv_vle32_v_i32m1(a32 + 4, vl);
++    vint32m1_t b_hi = __riscv_vle32_v_i32m1(b32 + 4, vl);
++    __riscv_vse16_v_i16mf2(r16,
++                           __riscv_vnclip_wx_i16mf2(a_lo, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 4,
++                           __riscv_vnclip_wx_i16mf2(b_lo, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 8,
++                           __riscv_vnclip_wx_i16mf2(a_hi, 0, 0, vl), vl);
++    __riscv_vse16_v_i16mf2(r16 + 12,
++                           __riscv_vnclip_wx_i16mf2(b_hi, 0, 0, vl), vl);
++    return simde__m256i_from_private(r_);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvssrarni_h_w(b, a, 0);
+   #else
+@@ -4074,6 +4157,15 @@ simde_mm256_permute4x64_epi64 (simde__m256i a, const int imm8)
+ }
+ #if defined(SIMDE_X86_AVX2_NATIVE)
+ #  define simde_mm256_permute4x64_epi64(a, imm8) _mm256_permute4x64_epi64(a, imm8)
++#elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++  /* Keep the x86 immediate semantics visible at the call site.  GCC requires
++   * __builtin_shufflevector indices to be integer constant expressions, so
++   * this must be a macro rather than the generic inline-function body above. */
++  #define simde_mm256_permute4x64_epi64(a, imm8) \
++    ((simde__m256i) __builtin_shufflevector( \
++      ((simde__m256i) (a)), ((simde__m256i) (a)), \
++      (((imm8)      ) & 3), (((imm8) >> 2) & 3), \
++      (((imm8) >> 4) & 3), (((imm8) >> 6) & 3)))
+ #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+ #  define simde_mm256_permute4x64_epi64(a, imm8) __lasx_xvpermi_d(a, imm8)
+ #endif
+@@ -4112,6 +4204,11 @@ simde__m256i
+ simde_mm256_permutevar8x32_epi32 (simde__m256i a, simde__m256i idx) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_permutevar8x32_epi32(a, idx);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_REARRANGE_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_PERMUTEVAR_FASTPATH)
++    typedef uint32_t lanes __attribute__((__vector_size__(32)));
++    const lanes index_mask = { 7, 7, 7, 7, 7, 7, 7, 7 };
++    lanes indices = ((lanes) idx) & index_mask;
++    return (simde__m256i) __builtin_shuffle((lanes) a, indices);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvperm_w(a, idx);
+   #else
+@@ -4203,6 +4300,14 @@ simde__m256i
+ simde_mm256_shuffle_epi8 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_shuffle_epi8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_REARRANGE_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SHUFFLE_EPI8_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(32)));
++    typedef uint8_t lanes __attribute__((__vector_size__(32)));
++    const lanes index_mask = { 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 };
++    const lanes lane_base = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
++    lanes indices = (((lanes) b) & index_mask) + lane_base;
++    lanes shuffled = __builtin_shuffle((lanes) a, indices);
++    return (simde__m256i) (shuffled & (lanes) (((signed_lanes) b) >= 0));
+   #else
+     simde__m256i_private
+       r_,
+@@ -4360,6 +4465,13 @@ simde__m256i
+ simde_mm256_sign_epi8 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_sign_epi8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(32)));
++    typedef uint8_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a;
++    lanes neg = (lanes) ((signed_lanes) b < 0);
++    lanes nz = (lanes) ((signed_lanes) b != 0);
++    return (simde__m256i) (((va ^ neg) - neg) & nz);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvsigncov_b(b, a);
+   #else
+@@ -4386,6 +4498,13 @@ simde__m256i
+ simde_mm256_sign_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_sign_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_REARRANGE_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SIGN_EPI16_FASTPATH)
++    typedef int16_t signed_lanes __attribute__((__vector_size__(32)));
++    typedef uint16_t lanes __attribute__((__vector_size__(32)));
++    lanes va = (lanes) a;
++    lanes neg = (lanes) (((signed_lanes) b) < 0);
++    lanes nz = (lanes) (((signed_lanes) b) != 0);
++    return (simde__m256i) (((va ^ neg) - neg) & nz);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvsigncov_h(b, a);
+   #else
+@@ -4927,6 +5046,10 @@ SIMDE_FUNCTION_ATTRIBUTES
+ simde__m256i
+ simde_mm256_srai_epi16 (simde__m256i a, const int imm8)
+     SIMDE_REQUIRE_RANGE(imm8, 0, 255) {
++  #if defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int16_t lanes __attribute__((__vector_size__(32)));
++    return (simde__m256i) ((lanes) a >> ((imm8 > 15) ? 15 : imm8));
++  #else
+   simde__m256i_private
+     r_,
+     a_ = simde__m256i_to_private(a);
+@@ -4946,6 +5069,7 @@ simde_mm256_srai_epi16 (simde__m256i a, const int imm8)
+   #endif
+ 
+   return simde__m256i_from_private(r_);
++  #endif
+ }
+ #if defined(SIMDE_X86_AVX2_NATIVE)
+ #  define simde_mm256_srai_epi16(a, imm8) _mm256_srai_epi16(a, imm8)
+@@ -5511,6 +5635,9 @@ simde__m256i
+ simde_mm256_sub_epi16 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_sub_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef uint16_t lanes __attribute__((__vector_size__(32)));
++    return (simde__m256i) ((lanes) a - (lanes) b);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvsub_h(a, b);
+   #else
+@@ -6101,6 +6228,9 @@ simde__m256i
+ simde_mm256_xor_si256 (simde__m256i a, simde__m256i b) {
+   #if defined(SIMDE_X86_AVX2_NATIVE)
+     return _mm256_xor_si256(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef uint16_t lanes __attribute__((__vector_size__(32)));
++    return (simde__m256i) ((lanes) a ^ (lanes) b);
+   #elif defined(SIMDE_LOONGARCH_LASX_NATIVE)
+     return __lasx_xvxor_v(a, b);
+   #else
+diff --git a/x86/sse.h b/x86/sse.h
+index 110142c..e81b53b 100644
+--- a/x86/sse.h
++++ b/x86/sse.h
+@@ -796,6 +796,9 @@ simde__m128
+ simde_mm_set_ps1 (simde_float32 a) {
+   #if defined(SIMDE_X86_SSE_NATIVE)
+     return _mm_set_ps1(a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    simde__m128 r = { a, a, a, a };
++    return r;
+   #elif defined(SIMDE_ARM_NEON_A32V7_NATIVE)
+     return vdupq_n_f32(a);
+   #elif defined(SIMDE_POWER_ALTIVEC_P6_NATIVE) || defined(SIMDE_ZARCH_ZVECTOR_14_NATIVE)
+@@ -3021,6 +3024,9 @@ simde__m128
+ simde_mm_loadu_ps (simde_float32 const mem_addr[HEDLEY_ARRAY_PARAM(4)]) {
+   #if defined(SIMDE_X86_SSE_NATIVE)
+     return _mm_loadu_ps(mem_addr);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m128 unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    return *(const unaligned_vec *) mem_addr;
+   #else
+     simde__m128_private r_;
+ 
+@@ -4510,6 +4516,9 @@ void
+ simde_mm_storeu_ps (simde_float32 mem_addr[4], simde__m128 a) {
+   #if defined(SIMDE_X86_SSE_NATIVE)
+     _mm_storeu_ps(mem_addr, a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m128 unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    *(unaligned_vec *) mem_addr = a;
+   #else
+     simde__m128_private a_ = simde__m128_to_private(a);
+ 
+diff --git a/x86/sse2.h b/x86/sse2.h
+index 8a32dc4..e41c306 100644
+--- a/x86/sse2.h
++++ b/x86/sse2.h
+@@ -4070,6 +4070,9 @@ simde__m128i
+ simde_mm_loadu_si128 (void const* mem_addr) {
+   #if defined(SIMDE_X86_SSE2_NATIVE)
+     return _mm_loadu_si128(HEDLEY_STATIC_CAST(__m128i const*, mem_addr));
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m128i unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    return *(const unaligned_vec *) mem_addr;
+   #else
+     simde__m128i_private r_;
+ 
+@@ -4123,6 +4126,24 @@ simde_mm_madd_epi16 (simde__m128i a, simde__m128i b) {
+       r_.altivec_i32 = vec_mule(a_.altivec_i16, b_.altivec_i16) + vec_mulo(a_.altivec_i16, b_.altivec_i16);
+     #elif defined(SIMDE_WASM_SIMD128_NATIVE)
+       r_.wasm_v128 = wasm_i32x4_dot_i16x8(a_.wasm_v128, b_.wasm_v128);
++    #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && defined(SIMDE_CONVERT_VECTOR_) && HEDLEY_HAS_BUILTIN(__builtin_shufflevector) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SSE2RVV_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MADD128_FASTPATH)
++      typedef int16_t simde_riscv_i16x8 __attribute__((__vector_size__(16)));
++      typedef int16_t simde_riscv_i16x4 __attribute__((__vector_size__(8)));
++      typedef int32_t simde_riscv_i32x4 __attribute__((__vector_size__(16)));
++      typedef uint32_t simde_riscv_u32x4 __attribute__((__vector_size__(16)));
++      simde_riscv_i16x8 va = (simde_riscv_i16x8) a_.i16;
++      simde_riscv_i16x8 vb = (simde_riscv_i16x8) b_.i16;
++      simde_riscv_i16x4 ae = __builtin_shufflevector(va, va, 0, 2, 4, 6);
++      simde_riscv_i16x4 ao = __builtin_shufflevector(va, va, 1, 3, 5, 7);
++      simde_riscv_i16x4 be = __builtin_shufflevector(vb, vb, 0, 2, 4, 6);
++      simde_riscv_i16x4 bo = __builtin_shufflevector(vb, vb, 1, 3, 5, 7);
++      simde_riscv_i32x4 wae = __builtin_convertvector(ae, simde_riscv_i32x4);
++      simde_riscv_i32x4 wao = __builtin_convertvector(ao, simde_riscv_i32x4);
++      simde_riscv_i32x4 wbe = __builtin_convertvector(be, simde_riscv_i32x4);
++      simde_riscv_i32x4 wbo = __builtin_convertvector(bo, simde_riscv_i32x4);
++      simde_riscv_i32x4 pe = wae * wbe;
++      simde_riscv_i32x4 po = wao * wbo;
++      r_.u32 = (simde_riscv_u32x4) pe + (simde_riscv_u32x4) po;
+     #elif defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && defined(SIMDE_CONVERT_VECTOR_) && HEDLEY_HAS_BUILTIN(__builtin_shufflevector)
+       int32_t SIMDE_VECTOR(32) a32, b32, p32;
+       SIMDE_CONVERT_VECTOR_(a32, a_.i16);
+@@ -4363,6 +4384,11 @@ simde__m128i
+ simde_mm_min_epu8 (simde__m128i a, simde__m128i b) {
+   #if defined(SIMDE_X86_SSE2_NATIVE)
+     return _mm_min_epu8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef uint8_t lanes __attribute__((__vector_size__(16)));
++    lanes va = (lanes) a, vb = (lanes) b;
++    lanes mask = (lanes) (va < vb);
++    return (simde__m128i) ((va & mask) | (vb & ~mask));
+   #else
+     simde__m128i_private
+       r_,
+@@ -7091,6 +7117,9 @@ void
+ simde_mm_storeu_si128 (void* mem_addr, simde__m128i a) {
+   #if defined(SIMDE_X86_SSE2_NATIVE)
+     _mm_storeu_si128(HEDLEY_STATIC_CAST(__m128i*, mem_addr), a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef simde__m128i unaligned_vec __attribute__((__aligned__(1), __may_alias__));
++    *(unaligned_vec *) mem_addr = a;
+   #elif defined(SIMDE_LOONGARCH_LSX_NATIVE)
+     __lsx_vst(simde__m128i_to_private(a).lsx_i64, mem_addr, 0);
+   #else
+diff --git a/x86/ssse3.h b/x86/ssse3.h
+index db60c2f..0581e27 100644
+--- a/x86/ssse3.h
++++ b/x86/ssse3.h
+@@ -38,6 +38,12 @@ simde__m128i
+ simde_mm_abs_epi8 (simde__m128i a) {
+   #if defined(SIMDE_X86_SSSE3_NATIVE)
+     return _mm_abs_epi8(a);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(16)));
++    typedef uint8_t lanes __attribute__((__vector_size__(16)));
++    lanes va = (lanes) a;
++    lanes mask = (lanes) ((signed_lanes) a < 0);
++    return (simde__m128i) ((va ^ mask) - mask);
+   #elif defined(SIMDE_X86_SSE2_NATIVE)
+     return _mm_min_epu8(a, _mm_sub_epi8(_mm_setzero_si128(), a));
+   #else
+@@ -326,6 +332,13 @@ simde__m128i
+ simde_mm_shuffle_epi8 (simde__m128i a, simde__m128i b) {
+   #if defined(SIMDE_X86_SSSE3_NATIVE)
+     return _mm_shuffle_epi8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_REARRANGE_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SHUFFLE_EPI8_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(16)));
++    typedef uint8_t lanes __attribute__((__vector_size__(16)));
++    const lanes index_mask = { 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 };
++    lanes indices = ((lanes) b) & index_mask;
++    lanes shuffled = __builtin_shuffle((lanes) a, indices);
++    return (simde__m128i) (shuffled & (lanes) (((signed_lanes) b) >= 0));
+   #else
+     simde__m128i_private
+       r_,
+@@ -778,6 +791,15 @@ simde__m128i
+ simde_mm_mulhrs_epi16 (simde__m128i a, simde__m128i b) {
+   #if defined(SIMDE_X86_SSSE3_NATIVE)
+     return _mm_mulhrs_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MUL16_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_MULHRS128_FASTPATH)
++    typedef int16_t simde_riscv_i16x8 __attribute__((__vector_size__(16)));
++    typedef int32_t simde_riscv_i32x8 __attribute__((__vector_size__(32)));
++    simde_riscv_i32x8 va = __builtin_convertvector((simde_riscv_i16x8) a, simde_riscv_i32x8);
++    simde_riscv_i32x8 vb = __builtin_convertvector((simde_riscv_i16x8) b, simde_riscv_i32x8);
++    const simde_riscv_i32x8 rounding = {
++      0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000, 0x4000
++    };
++    return (simde__m128i) __builtin_convertvector(((va * vb) + rounding) >> 15, simde_riscv_i16x8);
+   #else
+     simde__m128i_private
+       r_,
+@@ -867,6 +889,13 @@ simde__m128i
+ simde_mm_sign_epi8 (simde__m128i a, simde__m128i b) {
+   #if defined(SIMDE_X86_SSSE3_NATIVE)
+     return _mm_sign_epi8(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH)
++    typedef int8_t signed_lanes __attribute__((__vector_size__(16)));
++    typedef uint8_t lanes __attribute__((__vector_size__(16)));
++    lanes va = (lanes) a;
++    lanes neg = (lanes) ((signed_lanes) b < 0);
++    lanes nz = (lanes) ((signed_lanes) b != 0);
++    return (simde__m128i) (((va ^ neg) - neg) & nz);
+   #else
+     simde__m128i_private
+       r_,
+@@ -909,6 +938,13 @@ simde__m128i
+ simde_mm_sign_epi16 (simde__m128i a, simde__m128i b) {
+   #if defined(SIMDE_X86_SSSE3_NATIVE)
+     return _mm_sign_epi16(a, b);
++  #elif defined(SIMDE_RISCV_V_NATIVE) && defined(SIMDE_VECTOR_SUBSCRIPT_OPS) && HEDLEY_GCC_VERSION_CHECK(16,0,0) && !defined(__riscv_v_fixed_vlen) && !defined(SIMDE_RISCV_GCC16_NO_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_REARRANGE_FASTPATH) && !defined(SIMDE_RISCV_GCC16_NO_SIGN_EPI16_FASTPATH)
++    typedef int16_t signed_lanes __attribute__((__vector_size__(16)));
++    typedef uint16_t lanes __attribute__((__vector_size__(16)));
++    lanes va = (lanes) a;
++    lanes neg = (lanes) (((signed_lanes) b) < 0);
++    lanes nz = (lanes) (((signed_lanes) b) != 0);
++    return (simde__m128i) (((va ^ neg) - neg) & nz);
+   #else
+     simde__m128i_private
+       r_,

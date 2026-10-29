@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Reproduction integrity
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  offline-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source locks, patches, scripts and tutorial links
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v

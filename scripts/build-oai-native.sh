@@ -52,8 +52,10 @@ fi
 export SIONNA_RK_CPU_ONLY=1
 export CUDA_VISIBLE_DEVICES=""
 export NVIDIA_VISIBLE_DEVICES=void 
-export CFLAGS="-march=rv64gcv_zba_zbb_zbs -mabi=lp64d -mrvv-vector-bits=scalable"
-export CXXFLAGS="$CFLAGS"
+if [[ $(uname -m) == riscv64 ]]; then
+    export CFLAGS="${CFLAGS:--march=rv64gcv_zba_zbb_zbs -mabi=lp64d -mrvv-vector-bits=scalable}"
+    export CXXFLAGS="${CXXFLAGS:-$CFLAGS}"
+fi
 build_args=(
     -w "$radio_backend"
     --gNB
@@ -63,9 +65,12 @@ build_args=(
     --cmake-opt -DENABLE_DGX_OPTIMIZATIONS=OFF
     --cmake-opt -DAVX2=OFF
     --cmake-opt -DAVX512=OFF
-    --cmake-opt -DENABLE_PLUGINS=ON
-    --cmake-opt -DOAI_USRP=ON
 )
+if [[ $radio_backend == USRP ]]; then
+    build_args+=(--cmake-opt -DOAI_USRP=ON)
+else
+    build_args+=(--cmake-opt -DOAI_USRP=OFF)
+fi
 
 if [ "$install_deps" = "1" ]; then
     build_args=(-I "${build_args[@]}")
@@ -78,6 +83,11 @@ echo "OAI source: ${oai_dir}"
 # build_oai 的 SIMU 目标不一定编译 USRP 模块。
 # B200/B210 启动时需要动态加载 liboai_device.so。
 build_dir="${oai_dir}/cmake_targets/ran_build/build"
+
+if [[ $radio_backend != USRP ]]; then
+    echo "RFsim build complete; USRP device plugin is not required."
+    exit 0
+fi
 
 echo "Building the B200/B210 USRP device plugin"
 cmake --build "$build_dir" \

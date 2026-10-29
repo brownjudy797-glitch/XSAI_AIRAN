@@ -3,6 +3,8 @@
 
 先按目标选择一条路线，不需要把全部教程依次执行。命令在对应平台的 Ubuntu 终端运行。
 
+**新机器首选：[与当前 K3 对齐的从零 RFsim 复现](reproduction/README.md)**。直接使用本仓库 `c6698f7` 系列快照，包含私有依赖、构建检查、同步与计时采集；旧教程使用 `207aac9`，两套流程不可混用。完整 5G 另看 [CN5G/B210 新机前提](k3-cn5g/FROM_ZERO.md)。验证结果和未验收项见 [复现审计](../docs/REPRODUCIBILITY_AUDIT.md)。
+
 | 你的目标 | 教程 | 是否需要 5G 核心网 |
 |---|---|---|
 | K3 / RISC-V 编译与 RFsim 热点测量 | [K3 RV64](k3-rv64/README.md) | 否，使用 --phy-test --noS1 |

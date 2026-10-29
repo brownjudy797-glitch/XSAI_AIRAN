@@ -1,4 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
+> 新机器先阅读 [CN5G/B210 必需前提](FROM_ZERO.md)，补齐本地网络、订阅与 UHD。第 6.2 节仅供已有源码布局使用；Release 安装不能直接运行它。RFsim 热点实验改用 [当前 K3 复现流程](../reproduction/README.md)。
+
 # K3 SCTP 内核与 OAI CN5G RISC-V 移植说明
 
 本教程已整理为仓库下载版（2026-10-29）：保留原操作步骤，补丁和长脚本统一按版本分发、下载时检查 SHA256。
@@ -211,6 +213,8 @@ test -x ext/openairinterface5g/cmake_targets/ran_build/build/nr-uesoftmodem \
 初次部署应先完成 RFsim 软件 UE 验证，再尝试 B210 和真实 UE。
 
 ### 6.2 已有源码部署环境：启动核心网、gNB 和软件 UE
+本节是历史源码布局操作，下面的 `pkill` 会停止整机所有同名进程，仅供确认可以停机的专用实验机使用。新复现主线使用独立 namespace，不需要这些全局清理命令；不要在保留在线部署的 K3 上照抄本节。
+
 先停止可能遗留的进程：
 
 ```bash

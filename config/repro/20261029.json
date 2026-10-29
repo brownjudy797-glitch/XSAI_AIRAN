@@ -1,0 +1,19 @@
+{
+  "profile": "k3-observed-c6698f7-20261029",
+  "sionnaUpstream": "0abdce3ff7f5840d64b783632eb419ea6bf54ae5",
+  "oaiUpstream": "c6698f7dda869e0ab92e232da08d1a91385eb044",
+  "vendorTree": "6defb13dbb1007f795e976cdb7ad26d454a782a7",
+  "pluginTree": "754ea55745538a4f466f0dc7a0cb82323feb3985",
+  "oaiOverlay": "snapshots/k3/20261029/oai-published-to-observed.patch",
+  "asn1cRepository": "https://github.com/mouse07410/asn1c.git",
+  "asn1cCommit": "940dd5fa9f3917913fd487b13dfddfacd0ded06e",
+  "simdeRepository": "https://github.com/simd-everywhere/simde-no-tests.git",
+  "simdeCommit": "c7f26b73ba8e874b95c2cec2b497826ad2188f68",
+  "simdePatch": "patches/dependencies/20261029/simde-c7f26-k3.patch",
+  "simdePatchSha256": "3e0c495c7b69d575e4f601ec3bdcec89f917b3b5848a86db77d3417ab06582b3",
+  "riscvCFlags": "-march=rv64gcv_zba_zbb_zbs -mabi=lp64d -mrvv-vector-bits=scalable",
+  "targets": ["nr-softmodem", "nr-uesoftmodem", "rfsimulator", "dfts", "params_libconfig", "params_yaml"],
+  "requiredLibraries": ["librfsimulator.so", "libdfts.so", "libldpc.so", "libldpc_orig.so", "libparams_libconfig.so"],
+  "radio": {"rb": 106, "numerology": 1, "band": 78, "centerHz": 3319680000, "noS1": true},
+  "measurement": {"warmupSeconds": 20, "measureSeconds": 120, "roundsPerChannel": 5}
+}

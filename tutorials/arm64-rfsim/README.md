@@ -1,4 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
+> 与当前 K3 比较请使用 [统一快照复现流程](../reproduction/README.md)，并在 ARM64 上单独验收。本页保留旧 `207aac9` 路线，不能与现场 `c6698f7` 混合比较。
+
 # 在 ARM64 Ubuntu 上复现 OAI RFsim 模块热点时间实验
 
 本教程已整理为仓库下载版（2026-10-29）：保留原操作步骤，补丁和长脚本统一按版本分发、下载时检查 SHA256。
