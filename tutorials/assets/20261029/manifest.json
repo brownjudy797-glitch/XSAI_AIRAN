@@ -1,0 +1,63 @@
+{
+  "version": "20261029",
+  "sources": {
+    "k3": {
+      "path": "tutorials/k3-rv64/README.md",
+      "lines": 699,
+      "sourceSha256": "0e54c55d9115c86f467dc571d4cb163ac03da3878d4130a5b3747921fab1fe2b"
+    },
+    "x86": {
+      "path": "tutorials/x86-rfsim/README.md",
+      "lines": 463,
+      "sourceSha256": "8fd72bbc8cb686f45465ae7bc6e1c794d68f991b722db9b108c05ecaaee20584"
+    },
+    "arm64": {
+      "path": "tutorials/arm64-rfsim/README.md",
+      "lines": 587,
+      "sourceSha256": "e73b865a7c4a42b284d9437898f5544c141e9a9ba0c4fbeb34cdfca700e0ac5f"
+    },
+    "cn5g": {
+      "path": "tutorials/k3-cn5g/README.md",
+      "lines": 580,
+      "sourceSha256": "aed494846970a7bcb0a62e7da1e53b865d8c684e23414385c37f9baf955abbd0"
+    }
+  },
+  "assets": [
+    {
+      "file": "add-oai-timer.sh",
+      "sha256": "160a687c5b2bd4a209375a2aed9d28f2540c16a87b67fbf3d1fb11155b3f59e5",
+      "originalPayloadSha256": "1730064c3061c00d92752d1757ab741a6a08ff1ddee31c98a1f0d76d0e9a5df4"
+    },
+    {
+      "file": "cpu-only-plugins.patch",
+      "sha256": "95a29c8138c1b2cdc11d03556289ae5621a1f6c7d13311b345d1c58154e31e58",
+      "originalPayloadSha256": "95a29c8138c1b2cdc11d03556289ae5621a1f6c7d13311b345d1c58154e31e58"
+    },
+    {
+      "file": "k3-porting-dependency.patch",
+      "sha256": "41046d89c5797d95f0833d5207ffe61dde6087b5eb864cedfcfd2adba9c86f57",
+      "originalPayloadSha256": null
+    },
+    {
+      "file": "run-arm64-hotspot-experiment.sh",
+      "sha256": "bdce6895f0bebb13b49fc5b8fe2861ef92dd15ba2d81468bef5b42656389b6fa",
+      "originalPayloadSha256": "0ea94f0de08223be19048f5e7a3aa157aef724f465df569c435a898f1b787eef"
+    },
+    {
+      "file": "run-k3-b200.sh",
+      "sha256": "9aa5ad924ae4ee6260a97956110286eec00c59360ed7ac8c04287099672acc32",
+      "originalPayloadSha256": "0ddb813455523fa25489517a8826a49fdca9dad7cc1f34c358f2b768a218c622"
+    },
+    {
+      "file": "run-k3-hotspot-experiment.sh",
+      "sha256": "2cab94d83e3b91214707282429b551997e22145246aa3e489b709f213441992d",
+      "originalPayloadSha256": "35239f2b6ab988094ec9dcc34e094a88b307b4ecb5cad8087a9348e83c1ddf60"
+    },
+    {
+      "file": "run-x86-hotspot-experiment.sh",
+      "sha256": "c6dffd2ec0be3cf97158bf4d0e6b11c57d6b18f42a1335b172aca42d254c4e4d",
+      "originalPayloadSha256": "4925fc7da99e76cf2e9cc6bd18fd1c30502dbeb6a622fdd035f720227f62bc40"
+    }
+  ],
+  "portingInstallerBase": "503f6b3fc8376e213ff69b39f070e107bbea62bf"
+}

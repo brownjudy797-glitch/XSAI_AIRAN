@@ -1,0 +1,43 @@
+diff --git a/plugins/CMakeLists.txt b/plugins/CMakeLists.txt
+--- a/plugins/CMakeLists.txt
++++ b/plugins/CMakeLists.txt
+@@ -31,6 +31,9 @@ if (ENABLE_CUDA)
+   add_subdirectory(neural_receiver)
+   add_subdirectory(ldpc_cuda)
+   add_subdirectory(channel_emulation)
++else()
++  message(STATUS "CPU-only plugin build: CUDA/TensorRT plugins are disabled")
++  list(APPEND PLUGINS_SRC common/src/cpu_only_stubs.c)
+ endif ()
+ add_subdirectory(data_acquisition)
+ add_subdirectory(link_adaptation)
+diff --git a/plugins/common/src/cpu_only_stubs.c b/plugins/common/src/cpu_only_stubs.c
+new file mode 100644
+--- /dev/null
++++ b/plugins/common/src/cpu_only_stubs.c
+@@ -0,0 +1,25 @@
++/* CPU-only implementations for plugins that require CUDA or TensorRT. */
++#include "plugins.h"
++#include <stddef.h>
++#include <string.h>
++
++int load_receiver_lib(char *version, receiver_interface_t *interface)
++{
++  (void)version;
++  if (interface != NULL)
++    memset(interface, 0, sizeof(*interface));
++  return 0;
++}
++
++int free_receiver_lib(receiver_interface_t *interface)
++{
++  if (interface != NULL)
++    memset(interface, 0, sizeof(*interface));
++  return 0;
++}
++
++void init_channel_emulator_libs(const NR_DL_FRAME_PARMS *fp) { (void)fp; }
++void init_channel_emulator_worker_thread(void) {}
++void free_channel_emulator_libs(void) {}
++int is_channel_emulation_enabled(void) { return 0; }
++const void *channel_emulator_cir_read_and_apply(void) { return NULL; }

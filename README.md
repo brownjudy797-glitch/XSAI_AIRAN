@@ -2,7 +2,7 @@
 
 基于 Sionna Research Kit 与 OpenAirInterface (OAI) 的 5G NR 实验项目，重点是把真实空口 gNB、5G 核心网和 AI 物理层插件运行在进迭时空 K3 上，并研究 X100/A100 异构调度与物理层耗时。GitHub 仓库名为 `XSAI_AIRAN`；实验机上的工程路径仍是 `/home/ubuntu/sionna-rk`。
 
-本仓库是**源码、适配器、模型、脚本和可复现实验说明**，不是包含 SIM 数据、数据库、编译产物和设备配置的一键镜像。首次接触请先读 [项目与环境指南](docs/K3_PROJECT_GUIDE.md)；已经部署好 K3 的读者可看 [真实 UE 接入教程](tutorials/quickstart/README.md)。
+本仓库是**源码、适配器、模型、脚本和可复现实验说明**，不是包含 SIM 数据、数据库、编译产物和设备配置的一键镜像。从 [统一教程入口](tutorials/README.md) 选择 K3、x86、ARM64 或核心网路线；项目背景见 [项目与环境指南](docs/K3_PROJECT_GUIDE.md)。已经部署好 K3 的读者可看 [真实 UE 接入教程](tutorials/quickstart/README.md)。
 
 ## 项目包含什么
 
