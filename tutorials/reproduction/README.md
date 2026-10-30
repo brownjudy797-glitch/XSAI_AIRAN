@@ -18,7 +18,7 @@ K3 已验证环境是 Ubuntu 26.04.1、riscv64、GCC 16、约 31 GiB 内存。�
 ```bash
 sudo apt-get update
 sudo apt-get install -y git ca-certificates python3
-git clone --branch k3-acceptance-20261030 https://github.com/brownjudy797-glitch/XSAI_AIRAN.git "$HOME/XSAI_AIRAN-repro"
+git clone --branch k3-acceptance-20261030-r1 https://github.com/brownjudy797-glitch/XSAI_AIRAN.git "$HOME/XSAI_AIRAN-repro"
 cd "$HOME/XSAI_AIRAN-repro"
 git rev-parse HEAD
 uname -m
@@ -26,7 +26,7 @@ uname -m
 df -h "$HOME"
 ```
 
-使用固定发布标签 `k3-acceptance-20261030`，不要在实验中途执行 git pull。沿用已验证的 [`config/repro/20261029.json`](../../config/repro/20261029.json)：OAI/vendor、插件树、现场 overlay、SIMDe 与 ASN1C 提交以及 SIMDe 补丁散列没有改动；新版本增加验收记录、配置步骤与日志归档。准备脚本会核对源码树和文件，拒绝把本地修改误当基线。若未来 main 不再匹配该 profile，使用本次发布标签的 checkout，不能跳过检查。
+使用固定发布标签 `k3-acceptance-20261030-r1`，不要在实验中途执行 git pull。沿用已验证的 [`config/repro/20261029.json`](../../config/repro/20261029.json)：OAI/vendor、插件树、现场 overlay、SIMDe 与 ASN1C 提交以及 SIMDe 补丁散列没有改动；新版本增加验收记录、配置步骤与日志归档，r1 补记验收后观察到的 UPF 停机异常。准备脚本会核对源码树和文件，拒绝把本地修改误当基线。若未来 main 不再匹配该 profile，使用本次发布标签的 checkout，不能跳过检查。
 
 ## 2. 安装明确的依赖，准备独立源码
 

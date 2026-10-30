@@ -206,12 +206,23 @@
     "ueRegistered": true,
     "pduSessionActive": true,
     "pingSent": 5,
-    "pingReceived": 5
+    "pingReceived": 5,
+    "verifiedAt": "2026-10-30T10:38:39+08:00"
+  },
+  "postAcceptanceObservation": {
+    "at": "2026-10-30T10:58:51+08:00",
+    "context": "gNB stopped for a separately authorized LDPC benchmark; no further restart from this acceptance task.",
+    "sourceUpfExited": true,
+    "upfError": "malloc(): unaligned tcache chunk detected",
+    "rootCause": "not determined",
+    "shutdownStabilityPassed": false,
+    "recoveryCoordination": "User authorized forwarding the finding to the active benchmark task; recovery follows that task."
   },
   "limits": [
     "RFsim and B210 are different radio/PRB conditions, not an AI speedup comparison.",
     "No 30-minute stability or AI inference/call-count gate was performed.",
     "One 1-Mbps uplink step had nonzero loss; it is retained.",
+    "Source UPF later exited with an allocator error during gNB stop; shutdown/session-release reliability has not passed.",
     "Old source-layout rolling NF logs were overwritten during restoration without a pre-archive. Existing results directories and new acceptance evidence retained."
   ],
   "publishedArtifacts": {
