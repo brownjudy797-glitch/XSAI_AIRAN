@@ -28,7 +28,7 @@ Windows ──USB── Quectel UE
 ```powershell
 $K3Host = '<用户名>@<K3管理IP>'
 ssh $K3Host 'mkdir -p /home/ubuntu/XSAI-tutorial'
-scp ./k3-quickstart.sh "${K3Host}:/home/ubuntu/XSAI-tutorial/"
+scp ./k3-quickstart.sh ../../scripts/archive-k3-runtime-logs.py "${K3Host}:/home/ubuntu/XSAI-tutorial/"
 ssh $K3Host
 ```
 
@@ -47,6 +47,8 @@ bash /home/ubuntu/XSAI-tutorial/k3-quickstart.sh check
 若报文件变化：停止操作，核对变更并建立新的版本记录，不重新冻结覆盖旧快照。若 B210 未找到：检查线缆、供电与 USB 3 接口；不要复位整条 USB 总线。
 
 ## 3. K3：启动并确认核心网连接
+
+新版入口会先把滚动 NF 日志复制到 `logs/cn5g-k3/history/UTC时间-随机标识/`，再启动；归档目录和文件限制为当前用户读取。两份教程文件须一起上传，缺少归档工具时停止。现有服务 active 时继续保持现状。
 
 ```bash
 bash /home/ubuntu/XSAI-tutorial/k3-quickstart.sh start
@@ -68,6 +70,8 @@ journalctl "_SYSTEMD_INVOCATION_ID=$invocation" -n 100 --no-pager
 
 ## 4. Windows：连接 UE
 
+若设备管理器能看到 `VID_2C7C&PID_0801`、RM520N-GL/RmNet，却显示代码 28，须先安装匹配的驱动；本次 2026-10-30 即遇到该问题。参考 [Waveshare 的 RM520N-GL 说明](https://www.waveshare.com/wiki/RM520N-GL) 或 [移远官方驱动入口说明](https://forums.quectel.com/t/how-to-get-driver-tools/38963)。下载后核对 INF 硬件 ID、架构与 CAT 数字签名，以管理员身份安装**一种**匹配的 USB 网络驱动，不混装 NDIS/MBIM/RNDIS。本次匹配 NDIS 包的五个 CAT 均为有效的 Microsoft Windows Hardware Compatibility Publisher 签名；安装后出现 AT 串口和蜂窝网卡。不要把未装驱动误判为无线故障，也不要为此刷固件。
+
 回到 **Windows PowerShell**，查看实际网卡名称：
 
 ```powershell
@@ -88,6 +92,8 @@ AT+QENG="servingcell"
 ```
 
 当前实验 PLMN=`26299`、PCI=`0`、SSB ARFCN=`640320`。SIM 应为 READY；5G 注册状态应为已注册（1，或允许漫游场景下的 5）。`SEARCH`、`LIMSRV` 或其他运营商的小区，不算接入成功。`NOCONN` 不一定是故障，需结合注册和数据会话判断。
+
+2026-10-30 已完成新装核心网、真实 UE、用户面与目标速率窗口，详见 [本次验收结果](../../benchmarks/results/k3-20261030/README.md)。这不替代新设备本次检查。
 
 ## 5. Windows：验证走 UE 的用户面
 

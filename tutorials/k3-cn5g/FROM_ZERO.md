@@ -3,6 +3,8 @@
 
 先完成 [无射频 RFsim 构建与验证](../reproduction/README.md)，再进入本页。2026-10-29 的现场核查发现：运行机采用源码布局、特定 AMF 选择器和 `phy-fixed-build-20260922`；公开 CN5G Release 使用 `/opt` 布局。两者不能照搬启动路径。本文补齐准备与验收门槛；本次没有在运行中的 K3 重装核心网、导入订阅、重启内核或发射射频，因此不宣称新机器整套验收已经通过。
 
+2026-10-30 后续已完成 Release 安装器、独立新库、真实 UE 注册与用户面，以及上下行目标速率窗口，见 [验收记录](../../benchmarks/results/k3-20261030/README.md)。这是在现有 K3 OS 上的独立新装验收，没有重新烧录 OS；本页 USRP 从源码重新构建配方仍未在该次执行。
+
 ## 1. 选择唯一安装布局
 
 新机器按 [原 CN5G 教程第 5 节](README.md) 安装 Release。该教程包含 SCTP 检查、需要时安装内核、安装入口 `mysql-serve` 包名修正、包散列检查与 B210 安装器。已有现场源码部署按 [Quickstart](../quickstart/README.md) 使用部署守卫，不运行 Release 安装器覆盖它。
@@ -28,7 +30,70 @@ ${EDITOR:-nano} config.env
 
 `192.0.2.10` 是文档占位地址，必须修改后才传给 `./install-online.sh cn5g "$PWD/config.env"`。该安装器会导入数据库并复制配置，不能用在已有订户数据库的机器上当作“更新”。
 
+要精确使用本次验收包，可在已克隆的安装仓库内改用固定下载路径，绕过 `latest`（仍需先完成前页 SCTP 检查）。确认本节 `config.env` 已改好后执行：
+
+```bash
+(
+set -e
+git diff --quiet
+git diff --cached --quiet
+git checkout --detach 503f6b3fc8376e213ff69b39f070e107bbea62bf
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl zstd iproute2 iptables mysql-server
+(
+set -e
+cd 02-cn5g
+test ! -e cn5g-payload.tar.zst
+curl -fL --retry 3 --connect-timeout 20 \
+  https://github.com/brownjudy797-glitch/sionna-rk-k3-porting/releases/download/v2026.09.13/cn5g-riscv64-v2.1.0.tar.zst \
+  -o cn5g-riscv64-v2.1.0.tar.zst
+printf '%s  %s\n' 0370f100cc156f1bc5d5c58ae6a609c4488d10dfba76dff59f0eb8732e3826ad cn5g-riscv64-v2.1.0.tar.zst | sha256sum --check -
+ln -s cn5g-riscv64-v2.1.0.tar.zst cn5g-payload.tar.zst
+)
+sudo ./install.sh cn5g "$PWD/config.env"
+)
+```
+
+使用这条固定路径时无需再执行 `install-online.sh cn5g`。下载慢时可在电脑下载相同包后传到 K3，仍按上述 SHA256 在 K3 校验。已有数据库和配置的机器不要直接执行此初始化；本次验收使用独立新库和私有目录保留原环境。
+
 安装后逐项检查 `/etc/sionna-rk-k3/cn5g/` 中 AMF/SMF/UPF 配置：PLMN 的 MCC/MNC 与 MNC 位数、TAC、S-NSSAI 的 SST/SD、DNN，以及 gNB 的 AMF N2 地址和本地 N3 地址。真实 USIM、UE 请求、gNB、核心网四者必须一致。安装器的地址替换不等于完成这些参数的配置。
+
+**本次实际发现的缺步**：Release 模板仍为 PLMN `208/95`、TAC `0xa000`，DNS 指向旧实验地址。安装后、启动 NF 前，下面把这三个模板调整为本次已验收的 `262/99`、TAC 1；其他测试卡先修改代码中的参数，并同步 gNB 的 MNC 位数。脚本先核对三份配置、备份原件，再写入，不修改订阅和数据库密码：
+
+```bash
+sudo python3 - <<'PY'
+from pathlib import Path
+import datetime, ipaddress, re, shutil, uuid
+root=Path('/etc/sionna-rk-k3/cn5g')
+mcc,mnc,tac='262','99',1
+primary,secondary='8.8.8.8','1.1.1.1'
+assert len(mcc)==3 and mcc.isdigit() and len(mnc) in (2,3) and mnc.isdigit()
+assert 0<tac<65536
+ipaddress.IPv4Address(primary);ipaddress.IPv4Address(secondary)
+changes={}
+pattern=r'(?m)^([ \t]*(?:-[ \t]*)?mcc:[ \t]*)208([ \t]*\n[ \t]+mnc:[ \t]*)95(?=[ \t]*(?:#.*)?$)'
+for name in ['amf.yaml','smf.yaml','upf.yaml']:
+    file=root/name
+    if file.is_symlink(): raise SystemExit('Refusing config symlink: '+name)
+    text=file.read_text()
+    text,count=re.subn(pattern,lambda m:m[1]+mcc+m[2]+mnc,text)
+    expected=rf'(?m)mcc:[ \t]*{mcc}\n[ \t]+mnc:[ \t]*{mnc}[ \t]*(?:\n|$)'
+    if count!=2 and not (count==0 and len(re.findall(expected,text))>=2):
+        raise SystemExit('Unexpected template; inspect before editing: '+name)
+    text,tac_count=re.subn(r'(?m)^([ \t]*tac:[ \t]*)(?:0x[0-9a-fA-F]+|[0-9]+)[ \t]*$',lambda m:m[1]+str(tac),text)
+    if tac_count!=1: raise SystemExit('Unexpected TAC structure: '+name)
+    text=re.sub(r'(?m)^([ \t]+primary_ipv4:[ \t]*)"[^"]+"',lambda m:m[1]+'"'+primary+'"',text)
+    text=re.sub(r'(?m)^([ \t]+secondary_ipv4:[ \t]*)"[^"]+"',lambda m:m[1]+'"'+secondary+'"',text)
+    changes[file]=text
+backup=root.parent/('cn5g-before-profile-'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-'+uuid.uuid4().hex[:8])
+backup.mkdir(mode=0o700)
+for file,text in changes.items(): shutil.copy2(file,backup/file.name)
+for file,text in changes.items(): file.write_text(text)
+print('Profile updated; original files retained at',backup)
+PY
+```
+
+这一转换按本次 Release 的已核对模板编写；其他版本应先比对结构。完整的新机验收与边界见 [2026-10-30 记录](../../benchmarks/results/k3-20261030/README.md)。
 
 | 接口 | 必须核对 |
 |---|---|
