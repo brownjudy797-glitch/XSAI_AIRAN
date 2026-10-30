@@ -36,7 +36,15 @@ case "${1:-check}" in
         case "$state" in
             active) echo 'gNB already active; left unchanged. Continue with status and UE checks.' ;;
             activating|deactivating|reloading) echo "ERROR: service is $state; wait and inspect status." >&2; exit 1 ;;
-            inactive|failed|unknown) SIONNA_RK_ROOT="$ROOT" bash "$ROOT/scripts/run-k3-b200.sh" start ;;
+            inactive|failed|unknown)
+                archive="$ROOT/scripts/archive-k3-runtime-logs.py"
+                if [[ ! -r $archive ]]; then
+                    archive="$(dirname "${BASH_SOURCE[0]}")/archive-k3-runtime-logs.py"
+                fi
+                [[ -r $archive ]] || { echo 'ERROR: copy archive-k3-runtime-logs.py beside this tutorial before starting.' >&2; exit 1; }
+                python3 "$archive" --root "$ROOT"
+                SIONNA_RK_ROOT="$ROOT" bash "$ROOT/scripts/run-k3-b200.sh" start
+                ;;
             *) echo "ERROR: unexpected service state: $state" >&2; exit 1 ;;
         esac
         ;;
