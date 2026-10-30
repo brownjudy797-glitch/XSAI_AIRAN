@@ -8,6 +8,8 @@
 
 2026-10-30 已完成 **ideal/AWGN 各五轮正式计时、Release 核心网独立新装、B210/真实 UE 注册和用户面验收**。120 秒窗口上行约 2.999 Mbps、下行约 2.500 Mbps，均零丢包；另一次 1 Mbps 上行有小幅丢包，完整保留。见 [验收结果与边界](benchmarks/results/k3-20261030/README.md)。原部署已回切并复验；本次不证明全新 OS、30 分钟稳定性或 AI 实时门禁。
 
+后续停止 gNB 期间，原 UPF 出现 `malloc(): unaligned tcache chunk detected` 并退出。**停机/会话释放稳定性尚未通过，根因待定位**；不能仅凭上述 120 秒窗口宣称整套系统稳定。原始异常日志已归档，恢复已与占用同机的 LDPC 任务协调。
+
 新机请看 [从零复现教程](tutorials/reproduction/README.md) 和 [复现审计](docs/REPRODUCIBILITY_AUDIT.md)。先前只读观察见 [当前项目状态](docs/K3_CURRENT_STATUS.md)，另有 [独立 DFT 基准](benchmarks/dft/README.md) 和 [现场差异](snapshots/k3/20261029/README.md)。
 
 ## 项目包含什么

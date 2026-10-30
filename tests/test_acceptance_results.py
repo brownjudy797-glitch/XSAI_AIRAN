@@ -15,6 +15,8 @@ RESULT=ROOT/'benchmarks/results/k3-20261030'
 class Acceptance(unittest.TestCase):
     def test_public_artifacts_and_failed_step_retained(self):
         data=json.loads((RESULT/'verification.json').read_text())
+        self.assertFalse(data['postAcceptanceObservation']['shutdownStabilityPassed'])
+        self.assertTrue(data['postAcceptanceObservation']['sourceUpfExited'])
         for name,digest in data['publishedArtifacts'].items():
             self.assertEqual(hashlib.sha256((RESULT/name).read_bytes()).hexdigest(),digest)
         rounds=data['rfsim']['rounds'];self.assertEqual(len(rounds),10)
